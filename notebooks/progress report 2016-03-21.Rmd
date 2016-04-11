@@ -18,6 +18,7 @@ See a screenshot of a sample card below.
 
 ![Screenshot of sample learning card](../figures/card_screenshot.png)
 
+###Key Variables
 Variables that may have an impact on student performance:
 
   * Clicking hyperlinks
@@ -25,18 +26,21 @@ Variables that may have an impact on student performance:
   * Checking answers
   * Time spent on cards
   
+###Sample Data
 ```{r cache=FALSE}
 library(knitr)
+setwd("~/git/edsp/notebooks")
 source('../scripts/explore_data.R')
 df = load_data()
 
 source('../scripts/processing.R')
 outdf = restructure(df)
 outdf = rename_cols(outdf,new_names)
+kable(head(outdf))
+outdf = transform_vars(outdf)
 data = train_test_split(outdf)
 train=data[[1]]
 test=data[[2]]
-kable(head(outdf))
 hist(outdf$success)
 hist(outdf$handling_time)
 hist(outdf$hyperlink_clicks)
@@ -98,10 +102,65 @@ accuracy = get_accuracy(tab)
 print(c("accuracy:",accuracy))
 ```
 
+
+##Log-transform and binary variables
+Here I convert hyperlink, magnify and expert link clicks to binary (0 vs 1+) and handling time to logistic
+
+```{r}
+mylogit2 <- glm(label ~ hyperlink_clicked + magnify_clicked + expert_clicked + log_handling_time, data = train, family = "binomial")
+summary(mylogit2)
+```
+
+However, the model still needs a lot of work. It does not appear very accurate.
+
+Train Accuracy:
+```{r echo=FALSE}
+train_tab = confusion_matrix(mylogit2,train)
+print(train_tab)
+accuracy = get_accuracy(train_tab)
+print(c("accuracy:",accuracy))
+```
+
+Test Accuracy:
+```{r echo=FALSE}
+tab = confusion_matrix(mylogit2,test)
+print(tab)
+accuracy = get_accuracy(tab)
+print(c("accuracy:",accuracy))
+```
+
+###Decision Tree
+Next I tried a decision tree, borrowing code from the classification tutorial:
+```{r}
+mydat_tree2 <- ctree(label ~ hyperlink_clicked + magnify_clicked + expert_clicked + log_handling_time, data = train)
+plot(mydat_tree2)
+```
+
+Train Accuracy:
+```{r echo=FALSE}
+tab = confusion_matrix(mydat_tree2,train)
+print(tab)
+accuracy = get_accuracy(tab)
+print(c("accuracy:",accuracy))
+```
+
+Test Accuracy:
+```{r echo=FALSE}
+tab = confusion_matrix(mydat_tree2,test)
+print(tab)
+accuracy = get_accuracy(tab)
+print(c("accuracy:",accuracy))
+```
+
 ##Next Steps
 There is still a lot of work to do. I will tweak the logistic classifier, trying out different variables and variations on the existing variables.  
 
 The tree classifier shows more promise. 
 
 I also want to visualize the results better
+
+##Individual Cards
+Here I'll attempt to separate out model performance for each individual assessment card, rather than lumping them all together. This will solve two problems: one, that success is measured differently for different assessment cards.  And two, it can tell me the relative impact that different activity cards have on their respective assessments. For example, maybe activity cards 1-4 impact assessment card 5 more than activities 6-9 do on assessment 10.  
+
+
 

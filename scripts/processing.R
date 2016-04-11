@@ -20,7 +20,7 @@ rename_cols = function(df,new_names){
 
 aggregate_cards = function(df,first_card_num,test_card_num){
   # aggregate cards by adding up the number of engagement activities and summing the handling time
-  features = c('user_id','new_hl_clicked_num','new_magnify_clicked_num','new_expert_clicked_num','handling_time')
+  features = c('user_id','card_num','new_hl_clicked_num','new_magnify_clicked_num','new_expert_clicked_num','handling_time')
   activity_cards = df[df$card_num>=first_card_num & df$card_num<test_card_num,features]
   test_card = df[df$card_num==test_card_num,c('user_id','label','success')]
   agg = aggregate(activity_cards, by=list(activity_cards$user_id), FUN=sum, na.rm=FALSE)
@@ -51,6 +51,14 @@ restructure = function(df){
   return(outdf)
 }
 
+transform_vars = function(df){
+  df$hyperlink_clicked = ifelse(df$hyperlink_clicks>0,1,0) 
+  df$magnify_clicked = ifelse(df$magnify_clicks>0,1,0) 
+  df$expert_clicked = ifelse(df$expert_clicks>0,1,0) 
+  df$log_handling_time = ifelse(df$handling_time>0,log(df$handling_time),0)
+  return(df)
+}
+
 train_test_split=function(df,train_frac=0.75){
   #split into training and test set
   set.seed(2016)
@@ -60,10 +68,13 @@ train_test_split=function(df,train_frac=0.75){
   return (list(train,test))
 }
 
-#outdf = restructure(df)
-#data = train_test_split(outdf)
-#train=data[[1]]
-#test=data[[2]]
+outdf = restructure(df)
+outdf = rename_cols(outdf,new_names)
+kable(head(outdf))
+outdf = transform_vars(outdf)
+data = train_test_split(outdf)
+train=data[[1]]
+test=data[[2]]
 
 #draw histograms of the data - specifically hl_clicked, mm_clicked, expert_clicked, handling_time
 
