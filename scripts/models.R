@@ -25,19 +25,9 @@ plot(reg_tree)
 
 #Make training predictions
 confusion_matrix = function(model,df,threshold=.57){
-  pred_prob <- predict(model, subset(df, select=-label))
-  
-  prob2label = function(x,threshold=threshold){
-    if(x>=threshold){
-      return(1)
-    } else {
-      return(0)
-    }
-  }
-  
-  pred_label = sapply(pred_prob,prob2label)
-  
-  tab = table(pred_label,df$label, dnn=list('predicted','actual'))
+  df$pred_prob <- predict(model, subset(df, select=-label))
+  df$pred_label <- ifelse(df$pred_prob>= threshold,1,0)
+  tab = table(df$pred_label,df$label, dnn=list('predicted','actual'))
   return(tab)
 }
 

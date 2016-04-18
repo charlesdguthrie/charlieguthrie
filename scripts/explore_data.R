@@ -1,11 +1,8 @@
 #exploration of data
 
-#setwd("~/git/edsp/notebooks")
-
-load_data = function(){
-  dpath <- "data/fullData.csv"
+load_data = function(dpath,dictpath){
   df <- read.csv(dpath,sep=',', header=TRUE)
-  datadict = read.csv('data/dataDefs.csv')
+  datadict = read.csv(dictpath)
   return(df)
 }
 

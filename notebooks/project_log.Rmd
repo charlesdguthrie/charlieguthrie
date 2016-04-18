@@ -1,9 +1,9 @@
 ---
 title: "Engagement vs. Performance on the MedU Platform"
-subtitle: "Progress Report 2016-03-21"
 author: "Charlie Guthrie"
 date: "March 21, 2016"
 output: html_document
+subtitle: Progress Report 2016-03-21
 ---
 
 
@@ -27,27 +27,26 @@ Variables that may have an impact on student performance:
   * Time spent on cards
   
 ###Sample Data
-```{r cache=FALSE}
+```{r}
 library(knitr)
-#setwd("~/git/edsp/notebooks")
-source('scripts/explore_data.R')
-df = load_data()
+source('../scripts/explore_data.R')
+df = load_data("../data/fullData.csv",'../data/dataDefs.csv')
 
-source('scripts/processing.R')
+source('../scripts/processing.R')
 data = process_data(df)
 train=data[[1]]
 test=data[[2]]
 
-hist(outdf$success)
-hist(outdf$handling_time)
-hist(outdf$hyperlink_clicks)
-hist(outdf$magnify_clicks)
-hist(outdf$expert_clicks)
+hist(train$success)
+hist(train$handling_time)
+hist(train$hyperlink_clicks)
+hist(train$magnify_clicks)
+hist(train$expert_clicks)
 ```
 
 ##First Models
 ```{r results="hide"}
-source('scripts/models.R')
+source('../scripts/models.R')
 ```
 
 ###Logistic
@@ -161,13 +160,6 @@ print(c("logit accuracy:",accuracy))
 ```
 Spending a very short time (<20 seconds) on the learning activities does indeed make a student less likely to succeed on the assessment. On the other hand spending more than 100 seconds makes a student more likely to succeed
 
-##Next Steps
-There is still a lot of work to do. I will tweak the logistic classifier, trying out different variables and variations on the existing variables.  
-
-The tree classifier shows more promise. 
-
-I also want to visualize the results better
-
 ##Individual Assessment Cards
 Here I'll attempt to separate out model performance for each individual assessment card, rather than lumping them all together. This will solve two problems: one, that success is measured differently for different assessment cards.  And two, it can tell me the relative impact that different activity cards have on their respective assessments. For example, maybe activity cards 1-4 impact assessment card 5 more than activities 6-9 do on assessment 10.  
 
@@ -193,3 +185,6 @@ for (a in assessment_cards) {
 ##Individual Assessment Cards and Engagement Cards
 Here I split further to try and measure the impact of each engagement card's components on student performance.  For example, rather than combining cards 1-4 and measuring the aggregate impact on performance, I consider engagement activities from card 1 separately from engagement activities on card 2, etc.
 
+
+##Next Steps
+Come up with the best model from this log, 
