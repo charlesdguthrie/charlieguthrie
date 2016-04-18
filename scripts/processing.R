@@ -3,6 +3,7 @@
 
 #change student success to binary
 df$label=ifelse(df$success>50,1,0) 
+assessment_cards = c(5,9,12,15,19,21)
 
 new_names = list(
   'new_hl_clicked_num'='hyperlink_clicks',
@@ -39,8 +40,8 @@ aggregate_cards = function(df,first_card_num,test_card_num){
 restructure = function(df){
   #restructure data so that each row represents a student's score on a test card
   last=1
-  for(card in c(5,9,12,15,19,21)){
-    stan = aggregate_cards(df,last,card)
+  for(card in assessment_cards){
+    stan = aggregate_cards(df,last,card) #stan for STudent ANswers
     if(card==5){
       outdf=stan
     } else {
@@ -56,6 +57,8 @@ transform_vars = function(df){
   df$magnify_clicked = ifelse(df$magnify_clicks>0,1,0) 
   df$expert_clicked = ifelse(df$expert_clicks>0,1,0) 
   df$log_handling_time = ifelse(df$handling_time>0,log(df$handling_time),0)
+  df$time_lt_20 = ifelse(df$handling_time<20,1,0)
+  df$time_gt_100 = ifelse(df$handling_time>100,1,0)
   return(df)
 }
 
@@ -68,13 +71,21 @@ train_test_split=function(df,train_frac=0.75){
   return (list(train,test))
 }
 
-outdf = restructure(df)
-outdf = rename_cols(outdf,new_names)
-kable(head(outdf))
-outdf = transform_vars(outdf)
-data = train_test_split(outdf)
-train=data[[1]]
-test=data[[2]]
+get_single_card = function(df,card_num){
+  #take subset of data that refers to a single assessment card
+  return (df[which(df$card_num==card_num),])
+}
+
+process_data=function(df){
+  #wrapper function to process all data
+  #returns: data which is composed of train and test
+  outdf = restructure(df)
+  outdf = rename_cols(outdf,new_names)
+  kable(head(outdf))
+  outdf = transform_vars(outdf)
+  data = train_test_split(outdf)
+  return(data)
+}
 
 #draw histograms of the data - specifically hl_clicked, mm_clicked, expert_clicked, handling_time
 

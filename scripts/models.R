@@ -6,6 +6,7 @@ require(party)
 mylogit <- glm(label ~ hyperlink_clicks + magnify_clicks + expert_clicks + handling_time, data = train, family = "binomial")
 summary(mylogit)
 
+#log-transformed variables
 mylogit2 <- glm(label ~ hyperlink_clicked + magnify_clicked + expert_clicked + log_handling_time, data=train, family="binomial")
 summary(mylogit2)
 
@@ -23,10 +24,10 @@ reg_tree <- ctree(success ~ hyperlink_clicked + magnify_clicked + expert_clicked
 plot(reg_tree)
 
 #Make training predictions
-confusion_matrix = function(model,df){
+confusion_matrix = function(model,df,threshold=.57){
   pred_prob <- predict(model, subset(df, select=-label))
   
-  prob2label = function(x,threshold=0.55){
+  prob2label = function(x,threshold=threshold){
     if(x>=threshold){
       return(1)
     } else {
@@ -42,8 +43,10 @@ confusion_matrix = function(model,df){
 
 #Get accuracy score
 get_accuracy <- function(crosstab) {
-  (crosstab[1,1]+crosstab[2,2])/sum(sum((crosstab)))
+  return(sum(diag(crosstab))/sum(sum((crosstab))))
 }
+
+
 
 
 #Make test predictions
