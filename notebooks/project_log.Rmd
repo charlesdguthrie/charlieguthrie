@@ -2,7 +2,8 @@
 title: "Engagement vs. Performance on the MedU Platform"
 author: "Charlie Guthrie"
 date: "March 21, 2016"
-output: html_document
+output: md_document
+variant: markdown_github
 subtitle: Progress Report 2016-03-21
 ---
 
