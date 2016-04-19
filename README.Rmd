@@ -1,0 +1,191 @@
+---
+title: "Engagement vs. Performance on the MedU Platform"
+author: "Charlie Guthrie"
+date: "April 18, 2016"
+output: md_document
+variant: markdown_github
+subtitle: Progress Report 2016-03-21
+---
+
+
+##Project Overview
+I'm building a model to predict a student's performance in an online course from his/her level of engagement in the class. The ultimate goal is to determine which engagement activities contribute most to student performance and understanding. I'm using a data set from NYU Langone from MedU, an online learning platform for medical courses.
+
+
+
+##About the Data
+Student performance is measured by score on multiple-choice questions throughout the 23-card unit.  
+See a screenshot of a sample card below.
+
+![Screenshot of sample learning card](figures/card_screenshot.png)
+
+###Key Variables
+Variables that may have an impact on student performance:
+
+  * Clicking hyperlinks
+  * Enlarging images
+  * Checking answers
+  * Time spent on cards
+  
+###Sample Data
+```{r}
+library(knitr)
+source('scripts/explore_data.R')
+df = load_data('data/fullData.csv','data/dataDefs.csv')
+
+source('scripts/processing.R')
+data = process_data(df)
+train=data[[1]]
+test=data[[2]]
+
+hist(train$success)
+hist(train$handling_time)
+hist(train$hyperlink_clicks)
+hist(train$magnify_clicks)
+hist(train$expert_clicks)
+```
+
+##First Models
+```{r results="hide"}
+source('scripts/models.R')
+```
+
+###Logistic
+There appears to be a strong relationship between performance and clicks on the magnify button and expert buttons.  But the relationship is less clear with handling time and hyperlink clicks. 
+```{r}
+mylogit <- glm(label ~ hyperlink_clicks + magnify_clicks + expert_clicks + handling_time, data = train, family = "binomial")
+summary(mylogit)
+```
+
+However, the model still needs a lot of work. It does not appear very accurate.
+
+Train Accuracy:
+```{r echo=FALSE}
+train_tab = confusion_matrix(mylogit,train)
+print(train_tab)
+accuracy = get_accuracy(train_tab)
+print(c("accuracy:",accuracy))
+```
+
+Test Accuracy:
+```{r echo=FALSE}
+tab = confusion_matrix(mylogit,test)
+print(tab)
+accuracy = get_accuracy(tab)
+print(c("accuracy:",accuracy))
+```
+
+###Decision Tree
+Next I tried a decision tree, borrowing code from the classification tutorial:
+```{r}
+mydat_tree <- ctree(label ~ hyperlink_clicks + magnify_clicks + expert_clicks + handling_time, data = train)
+plot(mydat_tree)
+```
+
+Train Accuracy:
+```{r echo=FALSE}
+tab = confusion_matrix(mydat_tree,train)
+print(tab)
+accuracy = get_accuracy(tab)
+print(c("accuracy:",accuracy))
+```
+
+Test Accuracy:
+```{r echo=FALSE}
+tab = confusion_matrix(mydat_tree,test)
+print(tab)
+accuracy = get_accuracy(tab)
+print(c("accuracy:",accuracy))
+```
+
+
+##Log-transform and binary variables
+Here I convert hyperlink, magnify and expert link clicks to binary (0 vs 1+) and handling time to logistic
+
+```{r}
+mylogit2 <- glm(label ~ hyperlink_clicked + magnify_clicked + expert_clicked + log_handling_time, data = train, family = "binomial")
+summary(mylogit2)
+```
+
+However, the model still needs a lot of work. It does not appear very accurate.
+
+Train Accuracy:
+```{r echo=FALSE}
+train_tab = confusion_matrix(mylogit2,train)
+print(train_tab)
+accuracy = get_accuracy(train_tab)
+print(c("accuracy:",accuracy))
+```
+
+Test Accuracy:
+```{r echo=FALSE}
+tab = confusion_matrix(mylogit2,test)
+print(tab)
+accuracy = get_accuracy(tab)
+print(c("accuracy:",accuracy))
+```
+
+###Decision Tree
+Decision tree with the binary and logistic variables.
+```{r}
+mydat_tree2 <- ctree(label ~ hyperlink_clicked + magnify_clicked + expert_clicked + log_handling_time, data = train)
+plot(mydat_tree2)
+```
+
+Train Accuracy:
+```{r echo=FALSE}
+tab = confusion_matrix(mydat_tree2,train)
+print(tab)
+accuracy = get_accuracy(tab)
+print(c("accuracy:",accuracy))
+```
+
+Test Accuracy:
+```{r echo=FALSE}
+tab = confusion_matrix(mydat_tree2,test)
+print(tab)
+accuracy = get_accuracy(tab)
+print(c("accuracy:",accuracy))
+```
+
+
+##Bucketing handling time
+Bucket handling time into segments: for each unit there is an indicator for if the student spent less than 20 seconds on it, as well an indicator for spending more than 100 seconds.
+```{r}
+logit <- glm(label ~ hyperlink_clicked + magnify_clicked + expert_clicked + time_lt_20 + time_gt_100, data = train, family = "binomial")
+print(summary(logit))
+tab = confusion_matrix(logit,train)
+print(tab)
+accuracy = get_accuracy(tab)
+print(c("logit accuracy:",accuracy))
+```
+Spending a very short time (<20 seconds) on the learning activities does indeed make a student less likely to succeed on the assessment. On the other hand spending more than 100 seconds makes a student more likely to succeed
+
+##Individual Assessment Cards
+Here I'll attempt to separate out model performance for each individual assessment card, rather than lumping them all together. This will solve two problems: one, that success is measured differently for different assessment cards.  And two, it can tell me the relative impact that different activity cards have on their respective assessments. For example, maybe activity cards 1-4 impact assessment card 5 more than activities 6-9 do on assessment 10.  
+
+```{r}
+for (a in assessment_cards) {
+  cat("\n***************************************************\n----------\n|CARD",a,"|\n----------")
+  subtrain = get_single_card(train,a)
+  logit <- glm(label ~ hyperlink_clicked + magnify_clicked + expert_clicked + time_lt_20 + time_gt_100, data = subtrain, family = "binomial")
+  print(summary(logit))
+  tab = confusion_matrix(logit,subtrain)
+  print(tab)
+  accuracy = get_accuracy(tab)
+  print(c("logit accuracy:",accuracy))
+  tree <- ctree(label ~ hyperlink_clicked + magnify_clicked + expert_clicked + log_handling_time, data = subtrain)
+  plot(tree)
+  tab = confusion_matrix(tree,subtrain)
+  print(tab)
+  accuracy = get_accuracy(tab)
+  print(c("tree accuracy:",accuracy))
+}
+```
+
+##Individual Assessment Cards and Engagement Cards
+Here I split further to try and measure the impact of each engagement card's components on student performance.  For example, rather than combining cards 1-4 and measuring the aggregate impact on performance, I consider engagement activities from card 1 separately from engagement activities on card 2, etc.
+
+
+##Next Steps
+Come up with the best model from this log, 

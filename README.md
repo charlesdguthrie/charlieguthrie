@@ -14,7 +14,7 @@ Student performance is measured by score on multiple-choice questions
 throughout the 23-card unit.  
 See a screenshot of a sample card below.
 
-![Screenshot of sample learning card](../figures/card_screenshot.png)
+![Screenshot of sample learning card](figures/card_screenshot.png)
 
 ### Key Variables
 
@@ -28,38 +28,38 @@ Variables that may have an impact on student performance:
 ### Sample Data
 
     library(knitr)
-    source('../scripts/explore_data.R')
-    df = load_data("../data/fullData.csv",'../data/dataDefs.csv')
+    source('scripts/explore_data.R')
+    df = load_data('data/fullData.csv','data/dataDefs.csv')
 
-    source('../scripts/processing.R')
+    source('scripts/processing.R')
     data = process_data(df)
     train=data[[1]]
     test=data[[2]]
 
     hist(train$success)
 
-![](project_log_files/figure-markdown_strict/unnamed-chunk-1-1.png)<!-- -->
+![](README_files/figure-markdown_strict/unnamed-chunk-1-1.png)<!-- -->
 
     hist(train$handling_time)
 
-![](project_log_files/figure-markdown_strict/unnamed-chunk-1-2.png)<!-- -->
+![](README_files/figure-markdown_strict/unnamed-chunk-1-2.png)<!-- -->
 
     hist(train$hyperlink_clicks)
 
-![](project_log_files/figure-markdown_strict/unnamed-chunk-1-3.png)<!-- -->
+![](README_files/figure-markdown_strict/unnamed-chunk-1-3.png)<!-- -->
 
     hist(train$magnify_clicks)
 
-![](project_log_files/figure-markdown_strict/unnamed-chunk-1-4.png)<!-- -->
+![](README_files/figure-markdown_strict/unnamed-chunk-1-4.png)<!-- -->
 
     hist(train$expert_clicks)
 
-![](project_log_files/figure-markdown_strict/unnamed-chunk-1-5.png)<!-- -->
+![](README_files/figure-markdown_strict/unnamed-chunk-1-5.png)<!-- -->
 
 First Models
 ------------
 
-    source('../scripts/models.R')
+    source('scripts/models.R')
 
     ## Loading required package: party
 
@@ -84,7 +84,7 @@ First Models
 
     ## Loading required package: sandwich
 
-![](project_log_files/figure-markdown_strict/unnamed-chunk-2-1.png)<!-- -->![](project_log_files/figure-markdown_strict/unnamed-chunk-2-2.png)<!-- -->
+![](README_files/figure-markdown_strict/unnamed-chunk-2-1.png)<!-- -->![](README_files/figure-markdown_strict/unnamed-chunk-2-2.png)<!-- -->
 
 ### Logistic
 
@@ -151,7 +151,7 @@ tutorial:
     mydat_tree <- ctree(label ~ hyperlink_clicks + magnify_clicks + expert_clicks + handling_time, data = train)
     plot(mydat_tree)
 
-![](project_log_files/figure-markdown_strict/unnamed-chunk-6-1.png)<!-- -->
+![](README_files/figure-markdown_strict/unnamed-chunk-6-1.png)<!-- -->
 
 Train Accuracy:
 
@@ -235,7 +235,7 @@ Decision tree with the binary and logistic variables.
     mydat_tree2 <- ctree(label ~ hyperlink_clicked + magnify_clicked + expert_clicked + log_handling_time, data = train)
     plot(mydat_tree2)
 
-![](project_log_files/figure-markdown_strict/unnamed-chunk-12-1.png)<!-- -->
+![](README_files/figure-markdown_strict/unnamed-chunk-12-1.png)<!-- -->
 
 Train Accuracy:
 
@@ -416,7 +416,7 @@ activities 6-9 do on assessment 10.
     ## Warning in predict.lm(object, newdata, se.fit, scale = 1, type =
     ## ifelse(type == : prediction from a rank-deficient fit may be misleading
 
-![](project_log_files/figure-markdown_strict/unnamed-chunk-16-1.png)<!-- -->
+![](README_files/figure-markdown_strict/unnamed-chunk-16-1.png)<!-- -->
 
     ##          actual
     ## predicted    0    1
@@ -464,7 +464,7 @@ activities 6-9 do on assessment 10.
     ## Warning in predict.lm(object, newdata, se.fit, scale = 1, type =
     ## ifelse(type == : prediction from a rank-deficient fit may be misleading
 
-![](project_log_files/figure-markdown_strict/unnamed-chunk-16-2.png)<!-- -->
+![](README_files/figure-markdown_strict/unnamed-chunk-16-2.png)<!-- -->
 
     ##          actual
     ## predicted   0   1
@@ -472,7 +472,7 @@ activities 6-9 do on assessment 10.
     ##         1 363 711
     ## [1] "logit accuracy:"   "0.572906867356538"
 
-![](project_log_files/figure-markdown_strict/unnamed-chunk-16-3.png)<!-- -->
+![](README_files/figure-markdown_strict/unnamed-chunk-16-3.png)<!-- -->
 
     ##          actual
     ## predicted   0   1
@@ -517,7 +517,7 @@ activities 6-9 do on assessment 10.
     ##         1 295 572
     ## [1] "logit accuracy:"   "0.537566650508968"
 
-![](project_log_files/figure-markdown_strict/unnamed-chunk-16-4.png)<!-- -->
+![](README_files/figure-markdown_strict/unnamed-chunk-16-4.png)<!-- -->
 
     ##          actual
     ## predicted   0   1
@@ -602,14 +602,14 @@ activities 6-9 do on assessment 10.
     ## Warning in predict.lm(object, newdata, se.fit, scale = 1, type =
     ## ifelse(type == : prediction from a rank-deficient fit may be misleading
 
-![](project_log_files/figure-markdown_strict/unnamed-chunk-16-5.png)<!-- -->
+![](README_files/figure-markdown_strict/unnamed-chunk-16-5.png)<!-- -->
 
     ##          actual
     ## predicted    0    1
     ##         0 1115  972
     ## [1] "logit accuracy:"   "0.534259702922856"
 
-![](project_log_files/figure-markdown_strict/unnamed-chunk-16-6.png)<!-- -->
+![](README_files/figure-markdown_strict/unnamed-chunk-16-6.png)<!-- -->
 
     ##          actual
     ## predicted   0   1
