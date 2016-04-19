@@ -1,10 +1,14 @@
 #processing.R
 #process the data, restructuring into activity/assessment pairs: 1 row for each student-answer
+librar(reshape)
+
 
 #change student success to binary
 df$label=ifelse(df$success>50,1,0) 
 assessment_cards = c(5,9,12,15,19,21)
 
+
+#Rename columns
 new_names = list(
   'new_hl_clicked_num'='hyperlink_clicks',
   'new_magnify_clicked_num'='magnify_clicks',
@@ -21,6 +25,10 @@ rename_cols = function(df,new_names){
 
 aggregate_cards = function(df,first_card_num,test_card_num){
   # aggregate cards by adding up the number of engagement activities and summing the handling time
+  # params:
+  #   df: raw dataframe
+  #   first_card_num: number of first card corresponding to test card (first card in unit)
+  #   test_card_num: number of assessment card
   features = c('user_id','card_num','new_hl_clicked_num','new_magnify_clicked_num','new_expert_clicked_num','handling_time')
   activity_cards = df[df$card_num>=first_card_num & df$card_num<test_card_num,features]
   test_card = df[df$card_num==test_card_num,c('user_id','label','success')]
@@ -87,10 +95,86 @@ process_data=function(df){
   return(data)
 }
 
-#draw histograms of the data - specifically hl_clicked, mm_clicked, expert_clicked, handling_time
+widen = function(df){
+  #Reshape data to give an indicator for each card, each label. 
+  df2 = rename_cols(df,new_names)
+  df2 = transform_vars(df2)
+  keep = c('user_id','label','card_num','hyperlink_clicked','magnify_clicked','expert_clicked','handling_time')
+  subdf = df2[,keep]
+  mdf = melt(subdf, id=c("user_id","card_num"))
+  cdf = cast(mdf,user_id ~ variable + card_num)
+  keep = c('user_id',
+           'label_5',
+           'label_9',
+           'label_12',
+           'label_15',
+           'label_19',
+           'label_21',
+           'hyperlink_clicked_1',
+           'hyperlink_clicked_2',
+           'hyperlink_clicked_4',
+           'hyperlink_clicked_5',
+           'hyperlink_clicked_6',
+           'hyperlink_clicked_8',
+           'hyperlink_clicked_9',
+           'hyperlink_clicked_10',
+           'hyperlink_clicked_11',
+           'hyperlink_clicked_13',
+           'hyperlink_clicked_14',
+           'hyperlink_clicked_15',
+           'hyperlink_clicked_16',
+           'hyperlink_clicked_17',
+           'hyperlink_clicked_18',
+           'hyperlink_clicked_19',
+           'hyperlink_clicked_20',
+           'hyperlink_clicked_21',
+           'magnify_clicked_4',
+           'magnify_clicked_5',
+           'magnify_clicked_7',
+           'magnify_clicked_9',
+           'magnify_clicked_11',
+           'magnify_clicked_13',
+           'magnify_clicked_14',
+           'magnify_clicked_15',
+           'magnify_clicked_16',
+           'magnify_clicked_17',
+           'magnify_clicked_18',
+           'magnify_clicked_19',
+           'magnify_clicked_20',
+           'magnify_clicked_21',
+           'expert_clicked_5',
+           'expert_clicked_9',
+           'expert_clicked_14',
+           'expert_clicked_15',
+           'expert_clicked_16',
+           'expert_clicked_17',
+           'expert_clicked_19',
+           'expert_clicked_21',
+           'handling_time_1',
+           'handling_time_2',
+           'handling_time_3',
+           'handling_time_4',
+           'handling_time_5',
+           'handling_time_6',
+           'handling_time_7',
+           'handling_time_8',
+           'handling_time_9',
+           'handling_time_10',
+           'handling_time_11',
+           'handling_time_12',
+           'handling_time_13',
+           'handling_time_14',
+           'handling_time_15',
+           'handling_time_16',
+           'handling_time_17',
+           'handling_time_18',
+           'handling_time_19',
+           'handling_time_20',
+           'handling_time_21'
+          )
+  cdf = cdf[,keep]
+  data = train_test_split(cdf)
+  return(data)
+}
 
-#draw scatterplots and correlations between variables
-
-#build model predicting overall assessment performance from engagement activities
-
-#display results in KnitR
+#draw scatterplots and correlations between variables?

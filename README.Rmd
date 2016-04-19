@@ -186,6 +186,18 @@ for (a in assessment_cards) {
 ##Individual Assessment Cards and Engagement Cards
 Here I split further to try and measure the impact of each engagement card's components on student performance.  For example, rather than combining cards 1-4 and measuring the aggregate impact on performance, I consider engagement activities from card 1 separately from engagement activities on card 2, etc.
 
+```{r}
+data_w = widen(df)
+train_w = data_w[[1]]
+test_w = data_w[[2]]
+```
+
+Modeling engagement activities associated with the assessment on card 5:
+```{r}
+logit <- glm(label_5 ~ hyperlink_clicked_1 + hyperlink_clicked_2 + hyperlink_clicked_4 + hyperlink_clicked_5 + magnify_clicked_4 + magnify_clicked_5 + handling_time_1 + handling_time_2 + handling_time_3 + handling_time_4 + handling_time_5, data=train_w, family="binomial")
+summary(logit)
+```
+
 
 ##Next Steps
 Come up with the best model from this log, 
