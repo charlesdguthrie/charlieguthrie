@@ -169,7 +169,7 @@ for (a in assessment_cards) {
   cat("\n***************************************************\n----------\n|CARD",a,"|\n----------")
   subtrain = get_single_card(train,a)
   logit <- glm(label ~ hyperlink_clicked + magnify_clicked + expert_clicked + time_lt_20 + time_gt_100, data = subtrain, family = "binomial")
-  display_results(logit,subtrain)
+  display_results(logit,subtrain,subtrain$label)
   tree <- ctree(label ~ hyperlink_clicked + magnify_clicked + expert_clicked + log_handling_time, data = subtrain)
   plot(tree)
   tab = confusion_matrix(tree,subtrain)
@@ -235,4 +235,4 @@ display_results(logit,test_w,test_w$label_5)
 
 
 ##Next Steps
-Come up with the best model from this log, 
+Come up with the best model from this log

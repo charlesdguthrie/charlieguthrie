@@ -326,11 +326,7 @@ activities 6-9 do on assessment 10.
       cat("\n***************************************************\n----------\n|CARD",a,"|\n----------")
       subtrain = get_single_card(train,a)
       logit <- glm(label ~ hyperlink_clicked + magnify_clicked + expert_clicked + time_lt_20 + time_gt_100, data = subtrain, family = "binomial")
-      print(summary(logit))
-      tab = confusion_matrix(logit,subtrain)
-      print(tab)
-      accuracy = get_accuracy(tab)
-      print(c("logit accuracy:",accuracy))
+      display_results(logit,subtrain,subtrain$label)
       tree <- ctree(label ~ hyperlink_clicked + magnify_clicked + expert_clicked + log_handling_time, data = subtrain)
       plot(tree)
       tab = confusion_matrix(tree,subtrain)
@@ -374,7 +370,7 @@ activities 6-9 do on assessment 10.
     ##          actual
     ## predicted    0    1
     ##         0 1136  990
-    ## [1] "logit accuracy:"   "0.534336782690499"
+    ## [1] "accuracy:"         "0.534336782690499"
 
     ##          actual
     ## predicted    0    1
@@ -422,7 +418,7 @@ activities 6-9 do on assessment 10.
     ## predicted    0    1
     ##         0  288  358
     ##         1  476 1028
-    ## [1] "logit accuracy:"   "0.612093023255814"
+    ## [1] "accuracy:"         "0.612093023255814"
 
     ##          actual
     ## predicted    0    1
@@ -470,7 +466,7 @@ activities 6-9 do on assessment 10.
     ## predicted   0   1
     ##         0 507 545
     ##         1 363 711
-    ## [1] "logit accuracy:"   "0.572906867356538"
+    ## [1] "accuracy:"         "0.572906867356538"
 
 ![](README_files/figure-markdown_strict/unnamed-chunk-16-3.png)<!-- -->
 
@@ -515,7 +511,7 @@ activities 6-9 do on assessment 10.
     ## predicted   0   1
     ##         0 537 659
     ##         1 295 572
-    ## [1] "logit accuracy:"   "0.537566650508968"
+    ## [1] "accuracy:"         "0.537566650508968"
 
 ![](README_files/figure-markdown_strict/unnamed-chunk-16-4.png)<!-- -->
 
@@ -560,7 +556,7 @@ activities 6-9 do on assessment 10.
     ## predicted    0    1
     ##         0  142  161
     ##         1  583 1271
-    ## [1] "logit accuracy:"   "0.655076495132128"
+    ## [1] "accuracy:"         "0.655076495132128"
 
     ##          actual
     ## predicted    0    1
@@ -607,7 +603,7 @@ activities 6-9 do on assessment 10.
     ##          actual
     ## predicted    0    1
     ##         0 1115  972
-    ## [1] "logit accuracy:"   "0.534259702922856"
+    ## [1] "accuracy:"         "0.534259702922856"
 
 ![](README_files/figure-markdown_strict/unnamed-chunk-16-6.png)<!-- -->
 
@@ -626,7 +622,413 @@ combining cards 1-4 and measuring the aggregate impact on performance, I
 consider engagement activities from card 1 separately from engagement
 activities on card 2, etc.
 
+    data_w = widen(df)
+    train_w = data_w[[1]]
+    test_w = data_w[[2]]
+
+Modeling engagement activities associated with the assessment on card 5:
+
+    logit <- glm(label_5 ~ 
+                   hyperlink_clicked_1 + hyperlink_clicked_2 + hyperlink_clicked_4 + hyperlink_clicked_5 
+                 + magnify_clicked_4 + magnify_clicked_5 
+                 + time_lt_20_1 + time_lt_20_2 + time_lt_20_3 + time_lt_20_4 + time_lt_20_5
+                 + time_gt_100_1 + time_gt_100_2 + time_gt_100_3 + time_gt_100_4 + time_gt_100_5,
+                 data=train_w, family="binomial")
+    display_results(logit,train_w,train_w$label_5,threshold=0.3)
+
+    ## 
+    ## Call:
+    ## glm(formula = label_5 ~ hyperlink_clicked_1 + hyperlink_clicked_2 + 
+    ##     hyperlink_clicked_4 + hyperlink_clicked_5 + magnify_clicked_4 + 
+    ##     magnify_clicked_5 + time_lt_20_1 + time_lt_20_2 + time_lt_20_3 + 
+    ##     time_lt_20_4 + time_lt_20_5 + time_gt_100_1 + time_gt_100_2 + 
+    ##     time_gt_100_3 + time_gt_100_4 + time_gt_100_5, family = "binomial", 
+    ##     data = train_w)
+    ## 
+    ## Deviance Residuals: 
+    ##    Min      1Q  Median      3Q     Max  
+    ## -1.570  -1.107  -0.295   1.080   2.561  
+    ## 
+    ## Coefficients:
+    ##                       Estimate Std. Error z value Pr(>|z|)    
+    ## (Intercept)          -0.510039   0.206719  -2.467   0.0136 *  
+    ## hyperlink_clicked_1   0.335857   0.251439   1.336   0.1816    
+    ## hyperlink_clicked_2  12.048003 324.743842   0.037   0.9704    
+    ## hyperlink_clicked_4 -12.088941 324.743756  -0.037   0.9703    
+    ## hyperlink_clicked_5   0.015261   0.108901   0.140   0.8885    
+    ## magnify_clicked_4     0.203664   0.116659   1.746   0.0808 .  
+    ## magnify_clicked_5     0.473317   0.111157   4.258 2.06e-05 ***
+    ## time_lt_20_1          0.057108   0.117257   0.487   0.6262    
+    ## time_lt_20_2          0.097996   0.148316   0.661   0.5088    
+    ## time_lt_20_3         -0.361159   0.142264  -2.539   0.0111 *  
+    ## time_lt_20_4         -0.325851   0.140242  -2.323   0.0202 *  
+    ## time_lt_20_5         -2.071157   0.472690  -4.382 1.18e-05 ***
+    ## time_gt_100_1         0.026534   0.159972   0.166   0.8683    
+    ## time_gt_100_2        -0.009543   0.212809  -0.045   0.9642    
+    ## time_gt_100_3        -0.096651   0.111142  -0.870   0.3845    
+    ## time_gt_100_4        -0.096790   0.116747  -0.829   0.4071    
+    ## time_gt_100_5         0.244161   0.122238   1.997   0.0458 *  
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## (Dispersion parameter for binomial family taken to be 1)
+    ## 
+    ##     Null deviance: 2940.4  on 2128  degrees of freedom
+    ## Residual deviance: 2732.0  on 2112  degrees of freedom
+    ##   (35 observations deleted due to missingness)
+    ## AIC: 2766
+    ## 
+    ## Number of Fisher Scoring iterations: 11
+    ## 
+    ##          actual
+    ## predicted   0   1
+    ##         0 902 628
+    ##         1 239 360
+    ## [1] "accuracy:"         "0.592766557069046"
+
+    display_results(logit,test_w,test_w$label_5)
+
+    ## 
+    ## Call:
+    ## glm(formula = label_5 ~ hyperlink_clicked_1 + hyperlink_clicked_2 + 
+    ##     hyperlink_clicked_4 + hyperlink_clicked_5 + magnify_clicked_4 + 
+    ##     magnify_clicked_5 + time_lt_20_1 + time_lt_20_2 + time_lt_20_3 + 
+    ##     time_lt_20_4 + time_lt_20_5 + time_gt_100_1 + time_gt_100_2 + 
+    ##     time_gt_100_3 + time_gt_100_4 + time_gt_100_5, family = "binomial", 
+    ##     data = train_w)
+    ## 
+    ## Deviance Residuals: 
+    ##    Min      1Q  Median      3Q     Max  
+    ## -1.570  -1.107  -0.295   1.080   2.561  
+    ## 
+    ## Coefficients:
+    ##                       Estimate Std. Error z value Pr(>|z|)    
+    ## (Intercept)          -0.510039   0.206719  -2.467   0.0136 *  
+    ## hyperlink_clicked_1   0.335857   0.251439   1.336   0.1816    
+    ## hyperlink_clicked_2  12.048003 324.743842   0.037   0.9704    
+    ## hyperlink_clicked_4 -12.088941 324.743756  -0.037   0.9703    
+    ## hyperlink_clicked_5   0.015261   0.108901   0.140   0.8885    
+    ## magnify_clicked_4     0.203664   0.116659   1.746   0.0808 .  
+    ## magnify_clicked_5     0.473317   0.111157   4.258 2.06e-05 ***
+    ## time_lt_20_1          0.057108   0.117257   0.487   0.6262    
+    ## time_lt_20_2          0.097996   0.148316   0.661   0.5088    
+    ## time_lt_20_3         -0.361159   0.142264  -2.539   0.0111 *  
+    ## time_lt_20_4         -0.325851   0.140242  -2.323   0.0202 *  
+    ## time_lt_20_5         -2.071157   0.472690  -4.382 1.18e-05 ***
+    ## time_gt_100_1         0.026534   0.159972   0.166   0.8683    
+    ## time_gt_100_2        -0.009543   0.212809  -0.045   0.9642    
+    ## time_gt_100_3        -0.096651   0.111142  -0.870   0.3845    
+    ## time_gt_100_4        -0.096790   0.116747  -0.829   0.4071    
+    ## time_gt_100_5         0.244161   0.122238   1.997   0.0458 *  
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## (Dispersion parameter for binomial family taken to be 1)
+    ## 
+    ##     Null deviance: 2940.4  on 2128  degrees of freedom
+    ## Residual deviance: 2732.0  on 2112  degrees of freedom
+    ##   (35 observations deleted due to missingness)
+    ## AIC: 2766
+    ## 
+    ## Number of Fisher Scoring iterations: 11
+    ## 
+    ##          actual
+    ## predicted   0   1
+    ##         0 390 330
+    ##         1   7  13
+    ## [1] "accuracy:"         "0.544594594594595"
+
+Refining the model:
+
+    logit <- glm(label_5 ~ 
+                 magnify_clicked_5 
+                 + time_lt_20_3 + time_lt_20_4 + time_lt_20_5,
+                 data=train_w, family="binomial")
+    display_results(logit,train_w,train_w$label_5,0.1)
+
+    ## 
+    ## Call:
+    ## glm(formula = label_5 ~ magnify_clicked_5 + time_lt_20_3 + time_lt_20_4 + 
+    ##     time_lt_20_5, family = "binomial", data = train_w)
+    ## 
+    ## Deviance Residuals: 
+    ##     Min       1Q   Median       3Q      Max  
+    ## -1.3205  -1.0706  -0.2943   1.0408   2.5143  
+    ## 
+    ## Coefficients:
+    ##                   Estimate Std. Error z value Pr(>|z|)    
+    ## (Intercept)       -0.25643    0.08761  -2.927 0.003422 ** 
+    ## magnify_clicked_5  0.58671    0.09769   6.006 1.90e-09 ***
+    ## time_lt_20_3      -0.34792    0.13265  -2.623 0.008717 ** 
+    ## time_lt_20_4      -0.42684    0.12330  -3.462 0.000537 ***
+    ## time_lt_20_5      -2.08647    0.47112  -4.429 9.48e-06 ***
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## (Dispersion parameter for binomial family taken to be 1)
+    ## 
+    ##     Null deviance: 2940.4  on 2128  degrees of freedom
+    ## Residual deviance: 2744.7  on 2124  degrees of freedom
+    ##   (35 observations deleted due to missingness)
+    ## AIC: 2754.7
+    ## 
+    ## Number of Fisher Scoring iterations: 5
+    ## 
+    ##          actual
+    ## predicted   0   1
+    ##         0 723 431
+    ##         1 418 557
+    ## [1] "accuracy:"         "0.601221230624706"
+
+Modeling engagement activities associated with the assessment on card 9:
+
+    logit <- glm(label_9 ~ 
+                   hyperlink_clicked_1 + hyperlink_clicked_2 + hyperlink_clicked_4 + hyperlink_clicked_5 + hyperlink_clicked_6 + hyperlink_clicked_8 + hyperlink_clicked_9
+                 + magnify_clicked_4 + magnify_clicked_5 + magnify_clicked_7 + magnify_clicked_9 
+                 + time_lt_20_1 + time_lt_20_2 + time_lt_20_3 + time_lt_20_4 + time_lt_20_5 + time_lt_20_6 + time_lt_20_7 + time_lt_20_8 + time_lt_20_9
+                 + time_gt_100_1 + time_gt_100_2 + time_gt_100_3 + time_gt_100_4 + time_gt_100_5 + time_gt_100_6 + time_gt_100_7 + time_gt_100_8 + time_gt_100_9,
+                 data=train_w, family="binomial")
+    display_results(logit,train_w,train_w$label_5,threshold=0.3)
+
+    ## 
+    ## Call:
+    ## glm(formula = label_9 ~ hyperlink_clicked_1 + hyperlink_clicked_2 + 
+    ##     hyperlink_clicked_4 + hyperlink_clicked_5 + hyperlink_clicked_6 + 
+    ##     hyperlink_clicked_8 + hyperlink_clicked_9 + magnify_clicked_4 + 
+    ##     magnify_clicked_5 + magnify_clicked_7 + magnify_clicked_9 + 
+    ##     time_lt_20_1 + time_lt_20_2 + time_lt_20_3 + time_lt_20_4 + 
+    ##     time_lt_20_5 + time_lt_20_6 + time_lt_20_7 + time_lt_20_8 + 
+    ##     time_lt_20_9 + time_gt_100_1 + time_gt_100_2 + time_gt_100_3 + 
+    ##     time_gt_100_4 + time_gt_100_5 + time_gt_100_6 + time_gt_100_7 + 
+    ##     time_gt_100_8 + time_gt_100_9, family = "binomial", data = train_w)
+    ## 
+    ## Deviance Residuals: 
+    ##     Min       1Q   Median       3Q      Max  
+    ## -1.9076  -1.2742   0.7663   0.9316   1.5973  
+    ## 
+    ## Coefficients:
+    ##                       Estimate Std. Error z value Pr(>|z|)   
+    ## (Intercept)           0.681963   0.228463   2.985  0.00284 **
+    ## hyperlink_clicked_1  -0.007410   0.254755  -0.029  0.97679   
+    ## hyperlink_clicked_2 -14.583743 535.411312  -0.027  0.97827   
+    ## hyperlink_clicked_4  12.846225 535.411268   0.024  0.98086   
+    ## hyperlink_clicked_5   0.207791   0.132831   1.564  0.11774   
+    ## hyperlink_clicked_6  -0.094231   0.131760  -0.715  0.47450   
+    ## hyperlink_clicked_8 -14.062157 535.411229  -0.026  0.97905   
+    ## hyperlink_clicked_9  -0.243756   0.128045  -1.904  0.05695 . 
+    ## magnify_clicked_4    -0.063821   0.131419  -0.486  0.62723   
+    ## magnify_clicked_5    -0.005041   0.170395  -0.030  0.97640   
+    ## magnify_clicked_7     0.393703   0.144931   2.716  0.00660 **
+    ## magnify_clicked_9     0.377993   0.168972   2.237  0.02529 * 
+    ## time_lt_20_1          0.105784   0.121132   0.873  0.38250   
+    ## time_lt_20_2          0.160408   0.153433   1.045  0.29581   
+    ## time_lt_20_3          0.039551   0.156160   0.253  0.80006   
+    ## time_lt_20_4         -0.111625   0.155478  -0.718  0.47279   
+    ## time_lt_20_5         -0.356981   0.270707  -1.319  0.18727   
+    ## time_lt_20_6         -0.152238   0.159329  -0.955  0.33933   
+    ## time_lt_20_7         -0.291437   0.168617  -1.728  0.08392 . 
+    ## time_lt_20_8         -0.256704   0.155651  -1.649  0.09910 . 
+    ## time_lt_20_9         -0.496804   0.263656  -1.884  0.05953 . 
+    ## time_gt_100_1        -0.164300   0.164156  -1.001  0.31689   
+    ## time_gt_100_2         0.183521   0.224655   0.817  0.41398   
+    ## time_gt_100_3        -0.160462   0.123016  -1.304  0.19210   
+    ## time_gt_100_4         0.144660   0.132459   1.092  0.27478   
+    ## time_gt_100_5        -0.079679   0.136525  -0.584  0.55947   
+    ## time_gt_100_6        -0.067041   0.132393  -0.506  0.61259   
+    ## time_gt_100_7         0.059152   0.136154   0.434  0.66396   
+    ## time_gt_100_8        -0.008352   0.130683  -0.064  0.94904   
+    ## time_gt_100_9        -0.270271   0.122208  -2.212  0.02700 * 
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## (Dispersion parameter for binomial family taken to be 1)
+    ## 
+    ##     Null deviance: 2751.4  on 2115  degrees of freedom
+    ## Residual deviance: 2634.0  on 2086  degrees of freedom
+    ##   (48 observations deleted due to missingness)
+    ## AIC: 2694
+    ## 
+    ## Number of Fisher Scoring iterations: 12
+    ## 
+    ##          actual
+    ## predicted   0   1
+    ##         0 345 116
+    ##         1 787 868
+    ## [1] "accuracy:"         "0.573251417769376"
+
+    display_results(logit,test_w,test_w$label_5)
+
+    ## 
+    ## Call:
+    ## glm(formula = label_9 ~ hyperlink_clicked_1 + hyperlink_clicked_2 + 
+    ##     hyperlink_clicked_4 + hyperlink_clicked_5 + hyperlink_clicked_6 + 
+    ##     hyperlink_clicked_8 + hyperlink_clicked_9 + magnify_clicked_4 + 
+    ##     magnify_clicked_5 + magnify_clicked_7 + magnify_clicked_9 + 
+    ##     time_lt_20_1 + time_lt_20_2 + time_lt_20_3 + time_lt_20_4 + 
+    ##     time_lt_20_5 + time_lt_20_6 + time_lt_20_7 + time_lt_20_8 + 
+    ##     time_lt_20_9 + time_gt_100_1 + time_gt_100_2 + time_gt_100_3 + 
+    ##     time_gt_100_4 + time_gt_100_5 + time_gt_100_6 + time_gt_100_7 + 
+    ##     time_gt_100_8 + time_gt_100_9, family = "binomial", data = train_w)
+    ## 
+    ## Deviance Residuals: 
+    ##     Min       1Q   Median       3Q      Max  
+    ## -1.9076  -1.2742   0.7663   0.9316   1.5973  
+    ## 
+    ## Coefficients:
+    ##                       Estimate Std. Error z value Pr(>|z|)   
+    ## (Intercept)           0.681963   0.228463   2.985  0.00284 **
+    ## hyperlink_clicked_1  -0.007410   0.254755  -0.029  0.97679   
+    ## hyperlink_clicked_2 -14.583743 535.411312  -0.027  0.97827   
+    ## hyperlink_clicked_4  12.846225 535.411268   0.024  0.98086   
+    ## hyperlink_clicked_5   0.207791   0.132831   1.564  0.11774   
+    ## hyperlink_clicked_6  -0.094231   0.131760  -0.715  0.47450   
+    ## hyperlink_clicked_8 -14.062157 535.411229  -0.026  0.97905   
+    ## hyperlink_clicked_9  -0.243756   0.128045  -1.904  0.05695 . 
+    ## magnify_clicked_4    -0.063821   0.131419  -0.486  0.62723   
+    ## magnify_clicked_5    -0.005041   0.170395  -0.030  0.97640   
+    ## magnify_clicked_7     0.393703   0.144931   2.716  0.00660 **
+    ## magnify_clicked_9     0.377993   0.168972   2.237  0.02529 * 
+    ## time_lt_20_1          0.105784   0.121132   0.873  0.38250   
+    ## time_lt_20_2          0.160408   0.153433   1.045  0.29581   
+    ## time_lt_20_3          0.039551   0.156160   0.253  0.80006   
+    ## time_lt_20_4         -0.111625   0.155478  -0.718  0.47279   
+    ## time_lt_20_5         -0.356981   0.270707  -1.319  0.18727   
+    ## time_lt_20_6         -0.152238   0.159329  -0.955  0.33933   
+    ## time_lt_20_7         -0.291437   0.168617  -1.728  0.08392 . 
+    ## time_lt_20_8         -0.256704   0.155651  -1.649  0.09910 . 
+    ## time_lt_20_9         -0.496804   0.263656  -1.884  0.05953 . 
+    ## time_gt_100_1        -0.164300   0.164156  -1.001  0.31689   
+    ## time_gt_100_2         0.183521   0.224655   0.817  0.41398   
+    ## time_gt_100_3        -0.160462   0.123016  -1.304  0.19210   
+    ## time_gt_100_4         0.144660   0.132459   1.092  0.27478   
+    ## time_gt_100_5        -0.079679   0.136525  -0.584  0.55947   
+    ## time_gt_100_6        -0.067041   0.132393  -0.506  0.61259   
+    ## time_gt_100_7         0.059152   0.136154   0.434  0.66396   
+    ## time_gt_100_8        -0.008352   0.130683  -0.064  0.94904   
+    ## time_gt_100_9        -0.270271   0.122208  -2.212  0.02700 * 
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## (Dispersion parameter for binomial family taken to be 1)
+    ## 
+    ##     Null deviance: 2751.4  on 2115  degrees of freedom
+    ## Residual deviance: 2634.0  on 2086  degrees of freedom
+    ##   (48 observations deleted due to missingness)
+    ## AIC: 2694
+    ## 
+    ## Number of Fisher Scoring iterations: 12
+    ## 
+    ##          actual
+    ## predicted   0   1
+    ##         0 209 131
+    ##         1 182 212
+    ## [1] "accuracy:"         "0.573569482288828"
+
+Refining model 9:
+
+    logit <- glm(label_9 ~ 
+                   hyperlink_clicked_6 + hyperlink_clicked_8 + hyperlink_clicked_9
+                 + magnify_clicked_7 + magnify_clicked_9 
+                 + time_lt_20_6 + time_lt_20_7 + time_lt_20_8 + time_lt_20_9
+                 + time_gt_100_6 + time_gt_100_7 + time_gt_100_8 + time_gt_100_9,
+                 data=train_w, family="binomial")
+    display_results(logit,train_w,train_w$label_5,threshold=0.3)
+
+    ## 
+    ## Call:
+    ## glm(formula = label_9 ~ hyperlink_clicked_6 + hyperlink_clicked_8 + 
+    ##     hyperlink_clicked_9 + magnify_clicked_7 + magnify_clicked_9 + 
+    ##     time_lt_20_6 + time_lt_20_7 + time_lt_20_8 + time_lt_20_9 + 
+    ##     time_gt_100_6 + time_gt_100_7 + time_gt_100_8 + time_gt_100_9, 
+    ##     family = "binomial", data = train_w)
+    ## 
+    ## Deviance Residuals: 
+    ##     Min       1Q   Median       3Q      Max  
+    ## -1.8812  -1.2965   0.7818   0.9180   1.4597  
+    ## 
+    ## Coefficients:
+    ##                       Estimate Std. Error z value Pr(>|z|)    
+    ## (Intercept)           0.826818   0.135111   6.120 9.39e-10 ***
+    ## hyperlink_clicked_6  -0.047680   0.126760  -0.376 0.706813    
+    ## hyperlink_clicked_8 -13.054659 324.743730  -0.040 0.967934    
+    ## hyperlink_clicked_9  -0.168962   0.116982  -1.444 0.148643    
+    ## magnify_clicked_7     0.375384   0.139810   2.685 0.007254 ** 
+    ## magnify_clicked_9     0.374289   0.112142   3.338 0.000845 ***
+    ## time_lt_20_6         -0.174179   0.153859  -1.132 0.257604    
+    ## time_lt_20_7         -0.316956   0.159382  -1.989 0.046739 *  
+    ## time_lt_20_8         -0.270235   0.150608  -1.794 0.072767 .  
+    ## time_lt_20_9         -0.660644   0.220271  -2.999 0.002707 ** 
+    ## time_gt_100_6        -0.117913   0.127296  -0.926 0.354296    
+    ## time_gt_100_7         0.060962   0.131051   0.465 0.641805    
+    ## time_gt_100_8        -0.007227   0.128064  -0.056 0.955000    
+    ## time_gt_100_9        -0.274043   0.117160  -2.339 0.019332 *  
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## (Dispersion parameter for binomial family taken to be 1)
+    ## 
+    ##     Null deviance: 2751.4  on 2115  degrees of freedom
+    ## Residual deviance: 2650.9  on 2102  degrees of freedom
+    ##   (48 observations deleted due to missingness)
+    ## AIC: 2678.9
+    ## 
+    ## Number of Fisher Scoring iterations: 11
+    ## 
+    ##          actual
+    ## predicted   0   1
+    ##         0 334 111
+    ##         1 798 873
+    ## [1] "accuracy:"         "0.570415879017013"
+
+    display_results(logit,test_w,test_w$label_5)
+
+    ## 
+    ## Call:
+    ## glm(formula = label_9 ~ hyperlink_clicked_6 + hyperlink_clicked_8 + 
+    ##     hyperlink_clicked_9 + magnify_clicked_7 + magnify_clicked_9 + 
+    ##     time_lt_20_6 + time_lt_20_7 + time_lt_20_8 + time_lt_20_9 + 
+    ##     time_gt_100_6 + time_gt_100_7 + time_gt_100_8 + time_gt_100_9, 
+    ##     family = "binomial", data = train_w)
+    ## 
+    ## Deviance Residuals: 
+    ##     Min       1Q   Median       3Q      Max  
+    ## -1.8812  -1.2965   0.7818   0.9180   1.4597  
+    ## 
+    ## Coefficients:
+    ##                       Estimate Std. Error z value Pr(>|z|)    
+    ## (Intercept)           0.826818   0.135111   6.120 9.39e-10 ***
+    ## hyperlink_clicked_6  -0.047680   0.126760  -0.376 0.706813    
+    ## hyperlink_clicked_8 -13.054659 324.743730  -0.040 0.967934    
+    ## hyperlink_clicked_9  -0.168962   0.116982  -1.444 0.148643    
+    ## magnify_clicked_7     0.375384   0.139810   2.685 0.007254 ** 
+    ## magnify_clicked_9     0.374289   0.112142   3.338 0.000845 ***
+    ## time_lt_20_6         -0.174179   0.153859  -1.132 0.257604    
+    ## time_lt_20_7         -0.316956   0.159382  -1.989 0.046739 *  
+    ## time_lt_20_8         -0.270235   0.150608  -1.794 0.072767 .  
+    ## time_lt_20_9         -0.660644   0.220271  -2.999 0.002707 ** 
+    ## time_gt_100_6        -0.117913   0.127296  -0.926 0.354296    
+    ## time_gt_100_7         0.060962   0.131051   0.465 0.641805    
+    ## time_gt_100_8        -0.007227   0.128064  -0.056 0.955000    
+    ## time_gt_100_9        -0.274043   0.117160  -2.339 0.019332 *  
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## (Dispersion parameter for binomial family taken to be 1)
+    ## 
+    ##     Null deviance: 2751.4  on 2115  degrees of freedom
+    ## Residual deviance: 2650.9  on 2102  degrees of freedom
+    ##   (48 observations deleted due to missingness)
+    ## AIC: 2678.9
+    ## 
+    ## Number of Fisher Scoring iterations: 11
+    ## 
+    ##          actual
+    ## predicted   0   1
+    ##         0 201 105
+    ##         1 192 238
+    ## [1] "accuracy:"         "0.596467391304348"
+
 Next Steps
 ----------
 
-Come up with the best model from this log,
+Come up with the best model from this log

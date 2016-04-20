@@ -1,6 +1,6 @@
 #processing.R
 #process the data, restructuring into activity/assessment pairs: 1 row for each student-answer
-librar(reshape)
+library(reshape)
 
 
 #change student success to binary
