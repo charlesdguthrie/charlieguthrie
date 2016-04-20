@@ -99,7 +99,7 @@ widen = function(df){
   #Reshape data to give an indicator for each card, each label. 
   df2 = rename_cols(df,new_names)
   df2 = transform_vars(df2)
-  keep = c('user_id','label','card_num','hyperlink_clicked','magnify_clicked','expert_clicked','handling_time')
+  keep = c('user_id','label','card_num','hyperlink_clicked','magnify_clicked','expert_clicked','time_lt_20','time_gt_100')
   subdf = df2[,keep]
   mdf = melt(subdf, id=c("user_id","card_num"))
   cdf = cast(mdf,user_id ~ variable + card_num)
@@ -150,27 +150,48 @@ widen = function(df){
            'expert_clicked_17',
            'expert_clicked_19',
            'expert_clicked_21',
-           'handling_time_1',
-           'handling_time_2',
-           'handling_time_3',
-           'handling_time_4',
-           'handling_time_5',
-           'handling_time_6',
-           'handling_time_7',
-           'handling_time_8',
-           'handling_time_9',
-           'handling_time_10',
-           'handling_time_11',
-           'handling_time_12',
-           'handling_time_13',
-           'handling_time_14',
-           'handling_time_15',
-           'handling_time_16',
-           'handling_time_17',
-           'handling_time_18',
-           'handling_time_19',
-           'handling_time_20',
-           'handling_time_21'
+           'time_lt_20_1',
+           'time_lt_20_2',
+           'time_lt_20_3',
+           'time_lt_20_4',
+           'time_lt_20_5',
+           'time_lt_20_6',
+           'time_lt_20_7',
+           'time_lt_20_8',
+           'time_lt_20_9',
+           'time_lt_20_10',
+           'time_lt_20_11',
+           'time_lt_20_12',
+           'time_lt_20_13',
+           'time_lt_20_14',
+           'time_lt_20_15',
+           'time_lt_20_16',
+           'time_lt_20_17',
+           'time_lt_20_18',
+           'time_lt_20_19',
+           'time_lt_20_20',
+           'time_lt_20_21',
+           'time_gt_100_1',
+           'time_gt_100_2',
+           'time_gt_100_3',
+           'time_gt_100_4',
+           'time_gt_100_5',
+           'time_gt_100_6',
+           'time_gt_100_7',
+           'time_gt_100_8',
+           'time_gt_100_9',
+           'time_gt_100_10',
+           'time_gt_100_11',
+           'time_gt_100_12',
+           'time_gt_100_13',
+           'time_gt_100_14',
+           'time_gt_100_15',
+           'time_gt_100_16',
+           'time_gt_100_17',
+           'time_gt_100_18',
+           'time_gt_100_19',
+           'time_gt_100_20',
+           'time_gt_100_21'
           )
   cdf = cdf[,keep]
   data = train_test_split(cdf)

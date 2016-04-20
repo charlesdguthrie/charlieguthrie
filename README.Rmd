@@ -169,11 +169,7 @@ for (a in assessment_cards) {
   cat("\n***************************************************\n----------\n|CARD",a,"|\n----------")
   subtrain = get_single_card(train,a)
   logit <- glm(label ~ hyperlink_clicked + magnify_clicked + expert_clicked + time_lt_20 + time_gt_100, data = subtrain, family = "binomial")
-  print(summary(logit))
-  tab = confusion_matrix(logit,subtrain)
-  print(tab)
-  accuracy = get_accuracy(tab)
-  print(c("logit accuracy:",accuracy))
+  display_results(logit,subtrain)
   tree <- ctree(label ~ hyperlink_clicked + magnify_clicked + expert_clicked + log_handling_time, data = subtrain)
   plot(tree)
   tab = confusion_matrix(tree,subtrain)
@@ -194,8 +190,47 @@ test_w = data_w[[2]]
 
 Modeling engagement activities associated with the assessment on card 5:
 ```{r}
-logit <- glm(label_5 ~ hyperlink_clicked_1 + hyperlink_clicked_2 + hyperlink_clicked_4 + hyperlink_clicked_5 + magnify_clicked_4 + magnify_clicked_5 + handling_time_1 + handling_time_2 + handling_time_3 + handling_time_4 + handling_time_5, data=train_w, family="binomial")
-summary(logit)
+logit <- glm(label_5 ~ 
+               hyperlink_clicked_1 + hyperlink_clicked_2 + hyperlink_clicked_4 + hyperlink_clicked_5 
+             + magnify_clicked_4 + magnify_clicked_5 
+             + time_lt_20_1 + time_lt_20_2 + time_lt_20_3 + time_lt_20_4 + time_lt_20_5
+             + time_gt_100_1 + time_gt_100_2 + time_gt_100_3 + time_gt_100_4 + time_gt_100_5,
+             data=train_w, family="binomial")
+display_results(logit,train_w,train_w$label_5,threshold=0.3)
+display_results(logit,test_w,test_w$label_5)
+```
+
+Refining the model:
+```{r}
+logit <- glm(label_5 ~ 
+             magnify_clicked_5 
+             + time_lt_20_3 + time_lt_20_4 + time_lt_20_5,
+             data=train_w, family="binomial")
+display_results(logit,train_w,train_w$label_5,0.1)
+```
+
+Modeling engagement activities associated with the assessment on card 9:
+```{r}
+logit <- glm(label_9 ~ 
+               hyperlink_clicked_1 + hyperlink_clicked_2 + hyperlink_clicked_4 + hyperlink_clicked_5 + hyperlink_clicked_6 + hyperlink_clicked_8 + hyperlink_clicked_9
+             + magnify_clicked_4 + magnify_clicked_5 + magnify_clicked_7 + magnify_clicked_9 
+             + time_lt_20_1 + time_lt_20_2 + time_lt_20_3 + time_lt_20_4 + time_lt_20_5 + time_lt_20_6 + time_lt_20_7 + time_lt_20_8 + time_lt_20_9
+             + time_gt_100_1 + time_gt_100_2 + time_gt_100_3 + time_gt_100_4 + time_gt_100_5 + time_gt_100_6 + time_gt_100_7 + time_gt_100_8 + time_gt_100_9,
+             data=train_w, family="binomial")
+display_results(logit,train_w,train_w$label_5,threshold=0.3)
+display_results(logit,test_w,test_w$label_5)
+```
+
+Refining model 9:
+```{r}
+logit <- glm(label_9 ~ 
+               hyperlink_clicked_6 + hyperlink_clicked_8 + hyperlink_clicked_9
+             + magnify_clicked_7 + magnify_clicked_9 
+             + time_lt_20_6 + time_lt_20_7 + time_lt_20_8 + time_lt_20_9
+             + time_gt_100_6 + time_gt_100_7 + time_gt_100_8 + time_gt_100_9,
+             data=train_w, family="binomial")
+display_results(logit,train_w,train_w$label_5,threshold=0.3)
+display_results(logit,test_w,test_w$label_5)
 ```
 
 

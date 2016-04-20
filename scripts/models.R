@@ -24,10 +24,10 @@ reg_tree <- ctree(success ~ hyperlink_clicked + magnify_clicked + expert_clicked
 plot(reg_tree)
 
 #Make training predictions
-confusion_matrix = function(model,df,threshold=.57){
-  df$pred_prob <- predict(model, subset(df, select=-label))
+confusion_matrix = function(model,df,label=df$label,threshold=.57){
+  df$pred_prob <- predict(model, df)
   df$pred_label <- ifelse(df$pred_prob>= threshold,1,0)
-  tab = table(df$pred_label,df$label, dnn=list('predicted','actual'))
+  tab = table(df$pred_label,label, dnn=list('predicted','actual'))
   return(tab)
 }
 
@@ -36,8 +36,28 @@ get_accuracy <- function(crosstab) {
   return(sum(diag(crosstab))/sum(sum((crosstab))))
 }
 
+display_results <- function(model,df,label,threshold=0.57){
+  print(summary(model))
+  tab = confusion_matrix(model,df,label=label,threshold=threshold)
+  print(tab)
+  accuracy = get_accuracy(tab)
+  print(c("accuracy:",accuracy))
+}
 
 
+#TODO: don't bother with setting threshold as a parameter.  Compare models using AUC instead.
+optimize_threshold = function(){
+  #
+  accuracies = c()
+  thresholds = c(1:10)
+  for(i in thresholds){
+    threshold = i/10
+    tab = confusion_matrix(model,df,label=label,threshold=threshold)
+    accuracies[i] = get_accuracy(tab)
+  }
+  opt_threshold = thresholds[which.max(accuracies)]
+  return(opt_threshold)
+}
 
 #Make test predictions
 #tab = confusion_matrix(mylogit,train)
