@@ -233,6 +233,74 @@ display_results(logit,train_w,train_w$label_5,threshold=0.3)
 display_results(logit,test_w,test_w$label_5)
 ```
 
+Modeling engagement activities associated with the assessment on card 12:
+```{r}
+logit <- glm(label_12 ~ 
+               hyperlink_clicked_8 + hyperlink_clicked_9 + hyperlink_clicked_10 + hyperlink_clicked_11
+             + magnify_clicked_9 + magnify_clicked_11
+             + expert_clicked_5 + expert_clicked_9
+             + time_lt_20_8 + time_lt_20_9 + time_lt_20_10 + time_lt_20_11
+             + time_gt_100_8 + time_gt_100_9 + time_gt_100_10 + time_gt_100_11,
+             data=train_w, family="binomial")
+display_results(logit,train_w,train_w$label_5,threshold=0.3)
+display_results(logit,test_w,test_w$label_5)
+```
 
-##Next Steps
-Come up with the best model from this log
+Refining model for card 12:
+```{r}
+logit <- glm(label_12 ~ 
+               hyperlink_clicked_10 + hyperlink_clicked_11
+             + magnify_clicked_9 + magnify_clicked_11
+             + expert_clicked_5 + expert_clicked_9
+             + time_lt_20_8 + time_lt_20_9 + time_lt_20_10 + time_lt_20_11
+             + time_gt_100_8 + time_gt_100_9 + time_gt_100_10 + time_gt_100_11,
+             data=train_w, family="binomial")
+display_results(logit,train_w,train_w$label_5)
+display_results(logit,test_w,test_w$label_5)
+```
+
+Regularized regression for card 5:
+```{r}
+train_w_clean = train_w[complete.cases(train_w),]
+yTrain = as.vector(train_w_clean$label_5)
+keep = c('hyperlink_clicked_1', 'hyperlink_clicked_2', 'hyperlink_clicked_4', 'hyperlink_clicked_5', 'magnify_clicked_4', 'magnify_clicked_5', 'time_lt_20_1', 'time_lt_20_2', 'time_lt_20_3', 'time_lt_20_4', 'time_lt_20_5', 'time_gt_100_1', 'time_gt_100_2', 'time_gt_100_3', 'time_gt_100_4', 'time_gt_100_5')
+xTrain = as.matrix(train_w_clean[keep])
+LiblineaR(data=xTrain,target=yTrain,type=6,cost=10,bias=TRUE,verbose=FALSE, cross=10)  #cost=heuristicC(xTrain)
+for (i in c(5,10,20,30,50)) {
+  m=LiblineaR(data=xTrain,target=yTrain,type=6,cost=i,bias=TRUE,verbose=FALSE, cross=10)
+  print(m)
+}
+
+m
+foo = predict(m,train_w_clean,proba=TRUE)
+```
+
+##TODO
+Model 12,15,19,21
+Re-run models to get AUC for each
+Read directions for write-up
+Write-up
+Write slides (in Beamr?)
+Add L1 regularization
+Graph results
+Model 
+
+#Write-Up
+##Background and Intro
+This is about MedU dataset
+
+##Initial experiment
+1. First I did a broad model to establish taht there was a relationship between student engagement and performance.  In other words, good study habits produce better results.
+
+## Results of initial experiment
+Indeed a relationship.  Show how?  With scatter plot?  
+1. First say there was significance in model,
+1. Say students who did x were y more likely to get answer right
+
+## More detailed experiment
+1. Then I broke the data down to identify exactly which components of the lesson cards were useful for achieving better performance
+1. Tweaked the models for better accuracy
+
+## Results
+List of significant results for each unit. What activities contributed to performance?
+May need actual cards to demonstrate this.  
