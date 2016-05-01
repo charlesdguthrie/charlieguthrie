@@ -2,11 +2,7 @@
 #process the data, restructuring into activity/assessment pairs: 1 row for each student-answer
 library(reshape)
 
-
-#change student success to binary
-df$label=ifelse(df$success>50,1,0) 
-assessment_cards = c(5,9,12,15,19,21)
-
+ASSESSMENT_CARDS = c(5,9,12,15,19,21)
 
 #Rename columns
 new_names = list(
@@ -22,7 +18,6 @@ rename_cols = function(df,new_names){
   return(df)
 }
 
-
 aggregate_cards = function(df,first_card_num,test_card_num){
   # aggregate cards by adding up the number of engagement activities and summing the handling time
   # params:
@@ -31,7 +26,7 @@ aggregate_cards = function(df,first_card_num,test_card_num){
   #   test_card_num: number of assessment card
   features = c('user_id','card_num','new_hl_clicked_num','new_magnify_clicked_num','new_expert_clicked_num','handling_time')
   activity_cards = df[df$card_num>=first_card_num & df$card_num<test_card_num,features]
-  test_card = df[df$card_num==test_card_num,c('user_id','label','success')]
+  test_card = df[df$card_num==test_card_num,c('user_id','label')]
   agg = aggregate(activity_cards, by=list(activity_cards$user_id), FUN=sum, na.rm=FALSE)
   
   #rename grouping column
@@ -44,11 +39,18 @@ aggregate_cards = function(df,first_card_num,test_card_num){
   return(stan)
 }
 
+#TODO: run linear regression on overall score, make this into a function, add to presentation.
+#agg2 = aggregate(train, by=list(train$user_id), FUN=sum, na.rm=FALSE)
+#agg2 = agg2[c(-2,-3,)]
+#agg2$success = agg2$success/6
+#names(agg2)[names(agg2)=="Group.1"] <- "user_id" #rename to user_id
+
+
 
 restructure = function(df){
   #restructure data so that each row represents a student's score on a test card
   last=1
-  for(card in assessment_cards){
+  for(card in ASSESSMENT_CARDS){
     stan = aggregate_cards(df,last,card) #stan for STudent ANswers
     if(card==5){
       outdf=stan
@@ -87,9 +89,10 @@ get_single_card = function(df,card_num){
 process_data=function(df){
   #wrapper function to process all data
   #returns: data which is composed of train and test
+  df$label=ifelse(df$success>50,1,0) #change student success to binary
   outdf = restructure(df)
   outdf = rename_cols(outdf,new_names)
-  kable(head(outdf))
+  #kable(head(outdf))
   outdf = transform_vars(outdf)
   data = train_test_split(outdf)
   return(data)
@@ -97,9 +100,10 @@ process_data=function(df){
 
 widen = function(df){
   #Reshape data to give an indicator for each card, each label. 
+  df$label=ifelse(df$success>50,1,0) #change student success to binary
   df2 = rename_cols(df,new_names)
   df2 = transform_vars(df2)
-  keep = c('user_id','label','card_num','hyperlink_clicked','magnify_clicked','expert_clicked','time_lt_20','time_gt_100')
+  keep = c('user_id','label','card_num','hyperlink_clicked','magnify_clicked','expert_clicked','time_lt_20','time_gt_100','log_handling_time')
   subdf = df2[,keep]
   mdf = melt(subdf, id=c("user_id","card_num"))
   cdf = cast(mdf,user_id ~ variable + card_num)
@@ -150,6 +154,27 @@ widen = function(df){
            'expert_clicked_17',
            'expert_clicked_19',
            'expert_clicked_21',
+           'log_handling_time_1',
+           'log_handling_time_2',
+           'log_handling_time_3',
+           'log_handling_time_4',
+           'log_handling_time_5',
+           'log_handling_time_6',
+           'log_handling_time_7',
+           'log_handling_time_8',
+           'log_handling_time_9',
+           'log_handling_time_10',
+           'log_handling_time_11',
+           'log_handling_time_12',
+           'log_handling_time_13',
+           'log_handling_time_14',
+           'log_handling_time_15',
+           'log_handling_time_16',
+           'log_handling_time_17',
+           'log_handling_time_18',
+           'log_handling_time_19',
+           'log_handling_time_20',
+           'log_handling_time_21',
            'time_lt_20_1',
            'time_lt_20_2',
            'time_lt_20_3',
@@ -197,5 +222,3 @@ widen = function(df){
   data = train_test_split(cdf)
   return(data)
 }
-
-#draw scatterplots and correlations between variables?

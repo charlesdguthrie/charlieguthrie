@@ -1,3 +1,6 @@
+```{r setup, include=FALSE}
+opts_chunk$set(cache=TRUE)
+```
 <style>
 .reveal h1, .reveal h2, .reveal h3 {
   word-wrap: normal;
@@ -6,13 +9,15 @@
 }
 img {
   box-shadow:none;
-  border:10px;
-  border-color:none;
+  border:0px;
 }
 .midcenter {
     position: fixed;
     top: 50%;
     left: 50%;
+}
+.wide .reveal{
+  margin: 10px
 }
 .exclaim .reveal .state-background {
   background: black;
@@ -26,15 +31,44 @@ img {
 }
 </style>
 
+```{r echo=FALSE}
+library(knitr)
+setwd('~/git/edsp')
+source('scripts/explore_data.R')
+source('scripts/processing.R')
+source('scripts/model_functions.R')
+
+df = load_data('data/fullData.csv','data/dataDefs.csv')
+
+data = process_data(df)
+train=data[[1]]
+test=data[[2]]
+data_w = widen(df)
+train_w = data_w[[1]]
+test_w = data_w[[2]]
+
+#build models
+source('scripts/models.R')
+
+```
+
 Identifying Effective Learning Activities in an Online Course
 ========================================================
 author: Charlie Guthrie
 date: May 2, 2016
+transition: none
+
 APSTA-GE 2017: Educational Data Science Practicum
+
+
+Goal
+========================================================
+Identify which learning activities were most effective at increasing student assessment performance.
 
  
 ========================================================
 <img src="resources/logo.png" style="background-color:transparent; border:0px; box-shadow:none;margin-left:30px"></img>
+
 ***
 
 23-card online course
@@ -45,26 +79,17 @@ Learning activities on cards include:
 - images
 - assessments throughout
 
+
 About the Data
 ========================================================
 title:false
-<!-- #![Screenshot of sample learning card](figures/card_screenshot.png) -->
 <img src="figures/card_screenshot.png" style="background-color:transparent; border:0px; box-shadow:none;"></img>
-
-Goal
-========================================================
-Identify which learning activities were most effective at increasing student assessment performance.
-
-Project Overview
-========================================================
-1. Predict a student's performance from his/her overall level of engagement in the class. 
-1. Predict performance given specific learning activities.
 
 Key Variables
 ========================================================
 Assessment cards  
 ***
-![answer example](resources/answer example.png)
+<img src="resources/answer example.png" style="background-color:transparent; border:0px; box-shadow:none;"></img>
 
 Key Variables
 ========================================================
@@ -76,7 +101,7 @@ Variables that may have an impact on student performance:
   * Time spent on cards
   
 ***
-![hyperlink example](resources/hyperlink example.png)
+<img src="resources/hyperlink example.png" style="background-color:transparent; border:0px; box-shadow:none;"></img>
   
 Key Variables
 ========================================================
@@ -88,7 +113,7 @@ Variables that may have an impact on student performance:
   * Time spent on cards
   
 ***
-![magnify example](resources/magnify example.png)
+<img src="resources/magnify example.png" style="background-color:transparent; border:0px; box-shadow:none;"></img>
 
 Key Variables
 ========================================================
@@ -100,7 +125,7 @@ Variables that may have an impact on student performance:
   * Time spent on cards
   
 ***
-![expert answer](resources/hyperlink example.png)
+<img src="resources/expert answer.png" style="background-color:transparent; border:0px; box-shadow:none;"></img>
 
 Key Variables
 ========================================================
@@ -112,32 +137,100 @@ Variables that may have an impact on student performance:
   * **Time spent on cards**
   
 ***
+```{r echo=FALSE}
+hist(train$handling_time)
+```
 
 Key Variables
 ========================================================
-![card_map](figures/card_map.png)
+Not all activities are present on all cards.
+<img src="figures/card_map.png" style="background-color:transparent; border:0px; box-shadow:none;"></img>
 
-
-Initial experiment
+Project Overview
 ========================================================
-1. First I did a broad model to establish taht there was a relationship between student engagement and performance.  In other words, good study habits produce better results.
+<h3>Investigation 1</h3>
+Predict student performance from overall activity engagement. 
 
-Results of initial experiment
+<h3>Investigation 2</h3>
+Measure impact of specific learning activities and cards.
+
+Investigation 1: Does Studying Work?
 ========================================================
-Indeed a relationship.  Show how?  With scatter plot?  
+Is there a relationship between student engagement and performance?
 
-1. First say there was significance in model
-1. Say students who did x were y more likely to get answer right
-
-More detailed experiment
+Investigation 1: Does Studying Work?
 ========================================================
-1. Then I broke the data down to identify exactly which components of the lesson cards were useful for achieving better performance
-1. Tweaked the models for better accuracy
+<img src="figures/card_map_blocked.png" style="background-color:transparent; border:0px; box-shadow:none;"></img>
+<img src="figures/model 1.png" style="background-color:transparent; border:0px; box-shadow:none;"></img>
 
-Results
+Investigation 1: Procedure
 ========================================================
-List of significant results for each unit. What activities contributed to performance?
-May need actual cards to demonstrate this.  
+1. Restructure data: 1 line per student per assessment
+    - assessments are aggregated together
+1. Data transformations
+   - converting clicks to binary
+   - log-transform and binary transform of handling_time
+1. Model predicts if student will pass any assessment given relevant material
+
+Investigation 1: Results
+========================================================
+title: false
+<font size=6>
+```{r echo=FALSE}
+summary(models[[4]])
+```
+</font>
+
+Investigation 1: Results
+========================================================
+```{r echo=FALSE}
+kable(modelsDF,row.names=TRUE)
+
+auc = get_auc(models[[4]],test,test$label)
+paste("auc on test of model 4 =",format(round(auc, 2), nsmall = 2))
+```
+
+Investigation 2
+========================================================
+Which specific learning activities helped assessment score?
+
+<img src="figures/card_map_blocked.png" style="background-color:transparent; border:0px; box-shadow:none;"></img>
+
+Investigation 2: Procedure
+========================================================
+Which activities help students answer the question on card 5?
+<img src="figures/card_map_5.png" style="background-color:transparent; border:0px; box-shadow:none;"></img>
+<img src="figures/model 2 full.png" style="background-color:transparent; border:0px; box-shadow:none;"></img>
+
+Investigation 2: Procedure
+========================================================
+1. Run lasso-regularized logistic regression using all activities before assessment card
+1. Find largest regularization parameter that is close to maximum cross-validation AUC
+1. Re-run logistic with remaining variables
+1. Return variables that have significant impact with p-value < 0.05
+
+Investigation 2: Results
+========================================================
+<img src="figures/trained model 5.png" style="background-color:transparent; border:0px; box-shadow:none;"></img>
+
+Investigation 2: Results
+========================================================
+What activities contributed to performance on each assessment card?
+```{r echo=FALSE}
+resultsDF = get_resultsDF()
+kable(resultsDF)
+```
+
+Investigation 2: Results
+========================================================
+<img src="figures/results map.png" style="background-color:transparent; border:0px; box-shadow:none;"></img>
+
+Next Steps
+========================================================
+- Close analysis of card content
+- Discussion with MedU content designers
+- Make re-usable for any online course.
+- Use more robust, summative assessment.
 
 Thanks
 ========================================================

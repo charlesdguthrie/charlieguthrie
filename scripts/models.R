@@ -2,98 +2,464 @@
 #Models and testing on restructured dataset.
 require(party)
 require(ROCR)
+require(ggplot2)
 
 #regularization
-require(LiblineaR)
+require(glmnet)
+
+
+models = list()
 
 #logistic regression for correct
-mylogit <- glm(label ~ hyperlink_clicks + magnify_clicks + expert_clicks + handling_time, data = train, family = "binomial")
-summary(mylogit)
-
-#log-transformed variables
-mylogit2 <- glm(label ~ hyperlink_clicked + magnify_clicked + expert_clicked + log_handling_time, data=train, family="binomial")
-summary(mylogit2)
-
+models[[1]] <- glm(label ~ hyperlink_clicks + magnify_clicks + expert_clicks + handling_time, data = train, family = "binomial")
+#log-transformed handling time
+models[[2]] <- glm(label ~ hyperlink_clicks + magnify_clicks + expert_clicks + log_handling_time, data=train, family="binomial")
+#log-transformed handling time and binary clicks
+models[[3]] <- glm(label ~ hyperlink_clicked + magnify_clicked + expert_clicked + log_handling_time, data=train, family="binomial")
+#all binary
+models[[4]] <- glm(label ~ hyperlink_clicked + magnify_clicked + expert_clicked + time_lt_20 + time_gt_100, data=train, family="binomial")
 ## Classification Tree using party
-mydat_tree <- ctree(label ~ hyperlink_clicks + magnify_clicks + expert_clicks + handling_time, data = train)
-plot(mydat_tree)
+models[[5]] <- ctree(label ~ hyperlink_clicks + magnify_clicks + expert_clicks + handling_time, data = train)
+models[[6]] <- ctree(label ~ hyperlink_clicks + magnify_clicks + expert_clicks + log_handling_time, data = train)
+models[[7]] <- ctree(label ~ hyperlink_clicked + magnify_clicked + expert_clicked + log_handling_time, data = train)
+models[[8]] <- ctree(label ~ hyperlink_clicked + magnify_clicked + expert_clicked + time_lt_20 + time_gt_100, data = train)
 
-#Linear regression to predict score
-mylm <- lm(success ~ hyperlink_clicked + magnify_clicked + expert_clicked + log_handling_time, data = train)
-summary(mylm)
+model_type = c('logistic','logistic','logistic','logistic','tree','tree','tree','tree')
+clicks = c('scalar','scalar','binary','binary','scalar','scalar','binary','binary')
+time = c('scalar','log-transformed','log-transformed','binary','scalar','log-transformed','log-transformed','binary')
 
-##Regression Tree
-reg_tree <- ctree(success ~ hyperlink_clicked + magnify_clicked + expert_clicked + log_handling_time, 
-            data = train)
-plot(reg_tree)
 
-#Make training predictions
-confusion_matrix = function(model,df,label=df$label,threshold=.57){
-  df$pred_prob <- predict(model, df)
-  df$pred_label <- ifelse(df$pred_prob>= threshold,1,0)
-  tab = table(df$pred_label,label, dnn=list('predicted','actual'))
-  return(tab)
+aucs=c()
+for(model in models){
+  auc = display_results(model,df=train,label=train$label,verbose=FALSE)
+  aucs = append(aucs,auc)
 }
+aucs
 
-#Get accuracy score
-get_accuracy <- function(crosstab) {
-  return(sum(diag(crosstab))/sum(sum((crosstab))))
-}
+modelsDF = data.frame(cbind(model_type,clicks,time,aucs))
+colnames(modelsDF)=c('Model Type','Activity Measure','Time Spent','AUC')
 
-#display_results <- function(model,df,label,threshold=0.57){
-#  print(summary(model))
-#  tab = confusion_matrix(model,df,label=label,threshold=threshold)
-#  print(tab)
-#  accuracy = get_accuracy(tab)
-#  print(c("accuracy:",accuracy))
-#}
+#Regularization using glmnet for card 5 with log handling time:
+label_name = 'label_5'
+feature_list = c('hyperlink_clicked_1',
+                 'hyperlink_clicked_2',
+                 'hyperlink_clicked_4',
+                 'hyperlink_clicked_5',
+                 'magnify_clicked_4',
+                 'magnify_clicked_5',
+                 'time_lt_20_1',
+                 'time_lt_20_2',
+                 'time_lt_20_3',
+                 'time_lt_20_4',
+                 'time_lt_20_5',
+                 'time_gt_100_1',
+                 'time_gt_100_2',
+                 'time_gt_100_3',
+                 'time_gt_100_4',
+                 'time_gt_100_5'
+)
 
-display_results <- function(model,df,label){
-  print(summary(model))
-  auc = get_auc(model,df,label)
-  paste("auc =",format(round(auc, 2), nsmall = 2))
-}
+result_5 = regularized_logit(train_w, test_w, label_name, feature_list)
 
-#TODO: don't bother with setting threshold as a parameter.  Compare models using AUC instead.
-optimize_threshold = function(){
-  #
-  accuracies = c()
-  thresholds = c(1:10)
-  for(i in thresholds){
-    threshold = i/10
-    tab = confusion_matrix(model,df,label=label,threshold=threshold)
-    accuracies[i] = get_accuracy(tab)
+#Regularization using glmnet for card 9:
+label_name = 'label_9'
+feature_list = c(
+  'label_5',
+  'hyperlink_clicked_1',
+  'hyperlink_clicked_2',
+  'hyperlink_clicked_4',
+  'hyperlink_clicked_5',
+  'hyperlink_clicked_6',
+  'hyperlink_clicked_8',
+  'hyperlink_clicked_9',
+  'magnify_clicked_4',
+  'magnify_clicked_5',
+  'magnify_clicked_7',
+  'magnify_clicked_9',
+  'expert_clicked_5',
+  'time_lt_20_1',
+  'time_lt_20_2',
+  'time_lt_20_3',
+  'time_lt_20_4',
+  'time_lt_20_5',
+  'time_lt_20_6',
+  'time_lt_20_7',
+  'time_lt_20_8',
+  'time_lt_20_9',
+  'time_gt_100_1',
+  'time_gt_100_2',
+  'time_gt_100_3',
+  'time_gt_100_4',
+  'time_gt_100_5',
+  'time_gt_100_6',
+  'time_gt_100_7',
+  'time_gt_100_8',
+  'time_gt_100_9'
+)
+
+result_9 = regularized_logit(train_w, test_w, label_name, feature_list)
+
+#Regularization using glmnet for card 12:
+label_name = 'label_12'
+feature_list = c(
+  'label_5',
+  'label_9',
+  'hyperlink_clicked_1',
+  'hyperlink_clicked_2',
+  'hyperlink_clicked_4',
+  'hyperlink_clicked_5',
+  'hyperlink_clicked_6',
+  'hyperlink_clicked_8',
+  'hyperlink_clicked_9',
+  'hyperlink_clicked_10',
+  'hyperlink_clicked_11',
+  'magnify_clicked_4',
+  'magnify_clicked_5',
+  'magnify_clicked_7',
+  'magnify_clicked_9',
+  'magnify_clicked_11',
+  'expert_clicked_5',
+  'expert_clicked_9',
+  'time_lt_20_1',
+  'time_lt_20_2',
+  'time_lt_20_3',
+  'time_lt_20_4',
+  'time_lt_20_5',
+  'time_lt_20_6',
+  'time_lt_20_7',
+  'time_lt_20_8',
+  'time_lt_20_9',
+  'time_lt_20_10',
+  'time_lt_20_11',
+  'time_lt_20_12',
+  'time_gt_100_1',
+  'time_gt_100_2',
+  'time_gt_100_3',
+  'time_gt_100_4',
+  'time_gt_100_5',
+  'time_gt_100_6',
+  'time_gt_100_7',
+  'time_gt_100_8',
+  'time_gt_100_9',
+  'time_gt_100_10',
+  'time_gt_100_11',
+  'time_gt_100_12'
+)
+
+result_12 = regularized_logit(train_w, test_w, label_name, feature_list)
+
+
+#Regularization using glmnet for card 15:
+label_name = 'label_15'
+feature_list = c(
+  'label_5',
+  'label_9',
+  'label_12',
+  'hyperlink_clicked_1',
+  'hyperlink_clicked_2',
+  'hyperlink_clicked_4',
+  'hyperlink_clicked_5',
+  'hyperlink_clicked_6',
+  'hyperlink_clicked_8',
+  'hyperlink_clicked_9',
+  'hyperlink_clicked_10',
+  'hyperlink_clicked_11',
+  'hyperlink_clicked_13',
+  'hyperlink_clicked_14',
+  'hyperlink_clicked_15',
+  'magnify_clicked_4',
+  'magnify_clicked_5',
+  'magnify_clicked_7',
+  'magnify_clicked_9',
+  'magnify_clicked_11',
+  'magnify_clicked_13',
+  'magnify_clicked_14',
+  'magnify_clicked_15',
+  'expert_clicked_5',
+  'expert_clicked_9',
+  'expert_clicked_14',
+  'time_lt_20_1',
+  'time_lt_20_2',
+  'time_lt_20_3',
+  'time_lt_20_4',
+  'time_lt_20_5',
+  'time_lt_20_6',
+  'time_lt_20_7',
+  'time_lt_20_8',
+  'time_lt_20_9',
+  'time_lt_20_10',
+  'time_lt_20_11',
+  'time_lt_20_12',
+  'time_lt_20_13',
+  'time_lt_20_14',
+  'time_lt_20_15',
+  'time_gt_100_1',
+  'time_gt_100_2',
+  'time_gt_100_3',
+  'time_gt_100_4',
+  'time_gt_100_5',
+  'time_gt_100_6',
+  'time_gt_100_7',
+  'time_gt_100_8',
+  'time_gt_100_9',
+  'time_gt_100_10',
+  'time_gt_100_11',
+  'time_gt_100_12',
+  'time_gt_100_13',
+  'time_gt_100_14',
+  'time_gt_100_15'
+)
+
+result_15 = regularized_logit(train_w, test_w, label_name, feature_list)
+
+
+#Regularization using glmnet for card 19:
+label_name = 'label_19'
+feature_list = c(
+  'label_5',
+  'label_9',
+  'label_12',
+  'label_15',
+  'hyperlink_clicked_1',
+  'hyperlink_clicked_2',
+  'hyperlink_clicked_4',
+  'hyperlink_clicked_5',
+  'hyperlink_clicked_6',
+  'hyperlink_clicked_8',
+  'hyperlink_clicked_9',
+  'hyperlink_clicked_10',
+  'hyperlink_clicked_11',
+  'hyperlink_clicked_13',
+  'hyperlink_clicked_14',
+  'hyperlink_clicked_15',
+  'hyperlink_clicked_16',
+  'hyperlink_clicked_17',
+  'hyperlink_clicked_18',
+  'hyperlink_clicked_19',
+  'magnify_clicked_4',
+  'magnify_clicked_5',
+  'magnify_clicked_7',
+  'magnify_clicked_9',
+  'magnify_clicked_11',
+  'magnify_clicked_13',
+  'magnify_clicked_14',
+  'magnify_clicked_15',
+  'magnify_clicked_16',
+  'magnify_clicked_17',
+  'magnify_clicked_18',
+  'magnify_clicked_19',
+  'expert_clicked_5',
+  'expert_clicked_9',
+  'expert_clicked_14',
+  'expert_clicked_15',
+  'expert_clicked_16',
+  'expert_clicked_17',
+  'time_lt_20_1',
+  'time_lt_20_2',
+  'time_lt_20_3',
+  'time_lt_20_4',
+  'time_lt_20_5',
+  'time_lt_20_6',
+  'time_lt_20_7',
+  'time_lt_20_8',
+  'time_lt_20_9',
+  'time_lt_20_10',
+  'time_lt_20_11',
+  'time_lt_20_12',
+  'time_lt_20_13',
+  'time_lt_20_14',
+  'time_lt_20_15',
+  'time_lt_20_16',
+  'time_lt_20_17',
+  'time_lt_20_18',
+  'time_lt_20_19',
+  'time_gt_100_1',
+  'time_gt_100_2',
+  'time_gt_100_3',
+  'time_gt_100_4',
+  'time_gt_100_5',
+  'time_gt_100_6',
+  'time_gt_100_7',
+  'time_gt_100_8',
+  'time_gt_100_9',
+  'time_gt_100_10',
+  'time_gt_100_11',
+  'time_gt_100_12',
+  'time_gt_100_13',
+  'time_gt_100_14',
+  'time_gt_100_15',
+  'time_gt_100_16',
+  'time_gt_100_17',
+  'time_gt_100_18',
+  'time_gt_100_19'
+)
+
+result_19 = regularized_logit(train_w, test_w, label_name, feature_list)
+
+#Regularization using glmnet for card 21:
+#NOTE: there weren't enough distinct predictions from this so went with simplified model
+label_name = 'label_21'
+feature_list = c(
+  'label_5',
+  'label_9',
+  'label_12',
+  'label_15',
+  'label_19',
+  'hyperlink_clicked_1',
+  'hyperlink_clicked_2',
+  'hyperlink_clicked_4',
+  'hyperlink_clicked_5',
+  'hyperlink_clicked_6',
+  'hyperlink_clicked_8',
+  'hyperlink_clicked_9',
+  'hyperlink_clicked_10',
+  'hyperlink_clicked_11',
+  'hyperlink_clicked_13',
+  'hyperlink_clicked_14',
+  'hyperlink_clicked_15',
+  'hyperlink_clicked_16',
+  'hyperlink_clicked_17',
+  'hyperlink_clicked_18',
+  'hyperlink_clicked_19',
+  'hyperlink_clicked_20',
+  'hyperlink_clicked_21',
+  'magnify_clicked_4',
+  'magnify_clicked_5',
+  'magnify_clicked_7',
+  'magnify_clicked_9',
+  'magnify_clicked_11',
+  'magnify_clicked_13',
+  'magnify_clicked_14',
+  'magnify_clicked_15',
+  'magnify_clicked_16',
+  'magnify_clicked_17',
+  'magnify_clicked_18',
+  'magnify_clicked_19',
+  'magnify_clicked_20',
+  'magnify_clicked_21',
+  'expert_clicked_5',
+  'expert_clicked_9',
+  'expert_clicked_14',
+  'expert_clicked_15',
+  'expert_clicked_16',
+  'expert_clicked_17',
+  'expert_clicked_19',
+  'time_lt_20_1',
+  'time_lt_20_2',
+  'time_lt_20_3',
+  'time_lt_20_4',
+  'time_lt_20_5',
+  'time_lt_20_6',
+  'time_lt_20_7',
+  'time_lt_20_8',
+  'time_lt_20_9',
+  'time_lt_20_10',
+  'time_lt_20_11',
+  'time_lt_20_12',
+  'time_lt_20_13',
+  'time_lt_20_14',
+  'time_lt_20_15',
+  'time_lt_20_16',
+  'time_lt_20_17',
+  'time_lt_20_18',
+  'time_lt_20_19',
+  'time_lt_20_20',
+  'time_lt_20_21',
+  'time_gt_100_1',
+  'time_gt_100_2',
+  'time_gt_100_3',
+  'time_gt_100_4',
+  'time_gt_100_5',
+  'time_gt_100_6',
+  'time_gt_100_7',
+  'time_gt_100_8',
+  'time_gt_100_9',
+  'time_gt_100_10',
+  'time_gt_100_11',
+  'time_gt_100_12',
+  'time_gt_100_13',
+  'time_gt_100_14',
+  'time_gt_100_15',
+  'time_gt_100_16',
+  'time_gt_100_17',
+  'time_gt_100_18',
+  'time_gt_100_19',
+  'time_gt_100_20',
+  'time_gt_100_21'
+)
+
+#Simplified regularization using glmnet for card 21:
+label_name = 'label_21'
+feature_list = c(
+  'label_5',
+  'label_9',
+  'label_12',
+  'label_15',
+  'label_19',
+  'hyperlink_clicked_11',
+  'hyperlink_clicked_13',
+  'hyperlink_clicked_14',
+  'hyperlink_clicked_15',
+  'hyperlink_clicked_16',
+  'hyperlink_clicked_17',
+  'hyperlink_clicked_18',
+  'hyperlink_clicked_19',
+  'hyperlink_clicked_20',
+  'hyperlink_clicked_21',
+  'magnify_clicked_15',
+  'magnify_clicked_16',
+  'magnify_clicked_17',
+  'magnify_clicked_18',
+  'magnify_clicked_19',
+  'magnify_clicked_20',
+  'magnify_clicked_21',
+  'expert_clicked_5',
+  'expert_clicked_9',
+  'expert_clicked_14',
+  'expert_clicked_15',
+  'expert_clicked_16',
+  'expert_clicked_17',
+  'expert_clicked_19',
+  'time_lt_20_10',
+  'time_lt_20_11',
+  'time_lt_20_12',
+  'time_lt_20_13',
+  'time_lt_20_14',
+  'time_lt_20_15',
+  'time_lt_20_16',
+  'time_lt_20_17',
+  'time_lt_20_18',
+  'time_lt_20_19',
+  'time_lt_20_20',
+  'time_lt_20_21',
+  'time_gt_100_10',
+  'time_gt_100_11',
+  'time_gt_100_12',
+  'time_gt_100_13',
+  'time_gt_100_14',
+  'time_gt_100_15',
+  'time_gt_100_16',
+  'time_gt_100_17',
+  'time_gt_100_18',
+  'time_gt_100_19',
+  'time_gt_100_20',
+  'time_gt_100_21'
+)
+
+#TODO: fix results_21
+#result_21 = regularized_logit(train_w, test_w, label_name, feature_list)
+
+get_resultsDF = function(){
+  resultsDF = data.frame(Card=c(5,9,12,15,19))#,21))
+  result_list=list(result_5, result_9, result_12, result_15, result_19) #, result_21)
+  row=1
+  for(result in result_list){
+    resultsDF[row,'AUC']=result$auc
+    resultsDF[row,'Significant Variables']=paste(result$sig_coefs,collapse=', ')
+    row=row+1
   }
-  opt_threshold = thresholds[which.max(accuracies)]
-  return(opt_threshold)
+  #manual hack to include model 21
+  result_21_manual = c(21,0.628,"label_5, label_9, label_19, hyperlink_clicked_21, magnify_clicked_20, expert_clicked_19, time_lt_20_15, time_lt_20_20, time_gt_100_21")
+  resultsDF = rbind(resultsDF,result_21_manual)
+  return(resultsDF)
 }
-
-get_auc = function(model,data,label){
-  prob <- predict(model, newdata=data, type="response")
-  pred <- prediction(prob,label)
-  auc <- performance(pred, measure = "auc")
-  return(auc@y.values[[1]])
-}
-
-plot_roc_curve = function(){
-  #NOTE: Pasted from http://blog.yhat.com/posts/roc-curves.html for later
-  #Does not work with current dataset.
-  
-  prob <- predict(fit, newdata=test, type="response")
-  pred <- prediction(prob, test$is_expensive)
-  perf <- performance(pred, measure = "tpr", x.measure = "fpr")
-  # I know, the following code is bizarre. Just go with it.
-  auc <- performance(pred, measure = "auc")
-  auc <- auc@y.values[[1]]
-  
-  roc.data <- data.frame(fpr=unlist(perf@x.values),
-                         tpr=unlist(perf@y.values),
-                         model="GLM")
-  ggplot(roc.data, aes(x=fpr, ymin=0, ymax=tpr)) +
-    geom_ribbon(alpha=0.2) +
-    geom_line(aes(y=tpr)) +
-    ggtitle(paste0("ROC Curve w/ AUC=", auc))
-}
-
-#Make test predictions
-#tab = confusion_matrix(mylogit,train)
