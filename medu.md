@@ -31,7 +31,7 @@ img {
 
 
 
-Identifying Effective Learning Activities in an Online Course
+Evaluating Online Course Materials
 ========================================================
 author: Charlie Guthrie
 date: May 2, 2016
@@ -145,9 +145,10 @@ Investigation 1: Procedure
 1. Restructure data: 1 line per student per assessment
     - assessments are aggregated together
 1. Data transformations
+   - convert assessment scores to pass/fail
    - converting clicks to binary
    - log-transform and binary transform of handling_time
-1. Model predicts if student will pass any assessment given relevant material
+1. Classification model predicts if student will pass an assessment given measures of engagement
 
 Investigation 1: Results
 ========================================================
