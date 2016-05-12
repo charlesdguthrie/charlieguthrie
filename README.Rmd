@@ -45,7 +45,7 @@ Variables that may have an impact on student performance:
 This loads the data and builds models for demonstration. Procedure explained later in the document.
 ```{r echo=TRUE, results='hide', message=FALSE, warning=FALSE}
 library(knitr)
-setwd('~/git/edsp')
+#setwd('~/git/edsp')
 source('scripts/explore_data.R')
 source('scripts/processing.R')
 source('scripts/model_functions.R')

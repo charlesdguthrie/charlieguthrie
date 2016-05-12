@@ -47,7 +47,7 @@ This loads the data and builds models for demonstration. Procedure
 explained later in the document.
 
     library(knitr)
-    setwd('~/git/edsp')
+    #setwd('~/git/edsp')
     source('scripts/explore_data.R')
     source('scripts/processing.R')
     source('scripts/model_functions.R')

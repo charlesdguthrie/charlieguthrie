@@ -33,7 +33,7 @@ img {
 
 ```{r echo=FALSE}
 library(knitr)
-setwd('~/git/edsp')
+#setwd('~/git/edsp')
 source('scripts/explore_data.R')
 source('scripts/processing.R')
 source('scripts/model_functions.R')
