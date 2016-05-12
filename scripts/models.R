@@ -8,8 +8,12 @@ require(ggplot2)
 require(glmnet)
 
 
-models = list()
+#Linear regression
+lin = lm(success ~ hyperlink_clicks + magnify_clicks + expert_clicks + log_handling_time, data=lin_train)
 
+
+
+models = list()
 #logistic regression for correct
 models[[1]] <- glm(label ~ hyperlink_clicks + magnify_clicks + expert_clicks + handling_time, data = train, family = "binomial")
 #log-transformed handling time

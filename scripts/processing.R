@@ -26,7 +26,7 @@ aggregate_cards = function(df,first_card_num,test_card_num){
   #   test_card_num: number of assessment card
   features = c('user_id','card_num','new_hl_clicked_num','new_magnify_clicked_num','new_expert_clicked_num','handling_time')
   activity_cards = df[df$card_num>=first_card_num & df$card_num<test_card_num,features]
-  test_card = df[df$card_num==test_card_num,c('user_id','label')]
+  test_card = df[df$card_num==test_card_num,c('user_id','label','success')]
   agg = aggregate(activity_cards, by=list(activity_cards$user_id), FUN=sum, na.rm=FALSE)
   
   #rename grouping column
@@ -38,13 +38,6 @@ aggregate_cards = function(df,first_card_num,test_card_num){
   stan$card_num=test_card_num
   return(stan)
 }
-
-#TODO: run linear regression on overall score, make this into a function, add to presentation.
-#agg2 = aggregate(train, by=list(train$user_id), FUN=sum, na.rm=FALSE)
-#agg2 = agg2[c(-2,-3,)]
-#agg2$success = agg2$success/6
-#names(agg2)[names(agg2)=="Group.1"] <- "user_id" #rename to user_id
-
 
 
 restructure = function(df){
@@ -72,12 +65,15 @@ transform_vars = function(df){
   return(df)
 }
 
-train_test_split=function(df,train_frac=0.75){
-  #split into training and test set
+train_test_split=function(df,train_frac=0.8){
+  #split students into training and test groups.
   set.seed(2016)
-  train_index <- sample(2, nrow(df), replace=TRUE, prob=c(train_frac, 1-train_frac))
-  train <- df[train_index==1,]
-  test <- df[train_index==2,]
+  students = unique(df$user_id)
+  train_index <- sample(2, length(students), replace=TRUE, prob=c(train_frac, 1-train_frac))
+  train_students <- data.frame(user_id=students[train_index==1])
+  test_students <- data.frame(user_id=students[train_index==2])
+  train=merge(df,train_students,by="user_id")
+  test=merge(df,test_students,by="user_id")
   return (list(train,test))
 }
 
@@ -86,13 +82,26 @@ get_single_card = function(df,card_num){
   return (df[which(df$card_num==card_num),])
 }
 
+process_for_linear = function(df){
+  #Process and aggregate data for linear regression to establish relationship between learning activities and score
+  df$label=ifelse(df$success>50,1,0) #change student success to binary
+  outdf = restructure(df)
+  outdf = rename_cols(outdf,new_names)
+  
+  #aggregate into one row per student
+  agg = aggregate(outdf, by=list(outdf$user_id), FUN=mean, na.rm=FALSE)
+  agg = agg[c(-1,-3,-5)] #drop columns
+  agg = transform_vars(agg)
+  data = train_test_split(agg)
+  return(data)
+}
+
 process_data=function(df){
   #wrapper function to process all data
   #returns: data which is composed of train and test
   df$label=ifelse(df$success>50,1,0) #change student success to binary
   outdf = restructure(df)
   outdf = rename_cols(outdf,new_names)
-  #kable(head(outdf))
   outdf = transform_vars(outdf)
   data = train_test_split(outdf)
   return(data)

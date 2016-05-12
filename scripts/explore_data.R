@@ -6,7 +6,7 @@ load_data = function(dpath,dictpath){
   return(df)
 }
 
-get_summary <- function(df){
+get_summary = function(df){
   #builds data frame of summary statistics given input df
   summary = data.frame(variable = colnames(df))
   cols = colnames(df)
@@ -19,9 +19,9 @@ get_summary <- function(df){
   return(summary)
 }
 
-#df = load_data()
-#dfsum=get_summary(df)
-#dfsum
 
-#Also this is useful for exploring the data
-#str(df)
+freq_table = function(df,var){
+  #print frequency table
+  print(paste("Frequencies for",var))
+  print(round(prop.table(table(df[var])),2))
+}

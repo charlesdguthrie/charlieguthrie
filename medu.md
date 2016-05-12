@@ -163,24 +163,24 @@ glm(formula = label ~ hyperlink_clicked + magnify_clicked + expert_clicked +
 
 Deviance Residuals: 
     Min       1Q   Median       3Q      Max  
--1.5531  -1.2584   0.9018   1.0558   1.3168  
+-1.5622  -1.2518   0.9056   1.0506   1.3147  
 
 Coefficients:
                   Estimate Std. Error z value Pr(>|z|)    
-(Intercept)        0.02177    0.03803   0.573   0.5670    
-hyperlink_clicked  0.16673    0.04287   3.889   0.0001 ***
-magnify_clicked    0.22979    0.04387   5.238 1.63e-07 ***
-expert_clicked     0.16077    0.07190   2.236   0.0254 *  
-time_lt_20        -0.34354    0.06048  -5.680 1.35e-08 ***
-time_gt_100        0.27130    0.04483   6.052 1.43e-09 ***
+(Intercept)       -0.01487    0.03685  -0.403  0.68663    
+hyperlink_clicked  0.18811    0.04131   4.554 5.28e-06 ***
+magnify_clicked    0.18530    0.04233   4.377 1.20e-05 ***
+expert_clicked     0.19103    0.06980   2.737  0.00621 ** 
+time_lt_20        -0.30221    0.05917  -5.107 3.27e-07 ***
+time_gt_100        0.32078    0.04335   7.400 1.36e-13 ***
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
 (Dispersion parameter for binomial family taken to be 1)
 
-    Null deviance: 17355  on 12708  degrees of freedom
-Residual deviance: 17003  on 12703  degrees of freedom
-AIC: 17015
+    Null deviance: 18454  on 13510  degrees of freedom
+Residual deviance: 18073  on 13505  degrees of freedom
+AIC: 18085
 
 Number of Fisher Scoring iterations: 4
 ```
@@ -191,14 +191,14 @@ Investigation 1: Results
 
 |   |Model Type |Activity Measure |Time Spent      |AUC   |
 |:--|:----------|:----------------|:---------------|:-----|
-|1  |logistic   |scalar           |scalar          |0.588 |
+|1  |logistic   |scalar           |scalar          |0.589 |
 |2  |logistic   |scalar           |log-transformed |0.589 |
 |3  |logistic   |binary           |log-transformed |0.593 |
-|4  |logistic   |binary           |binary          |0.594 |
-|5  |tree       |scalar           |scalar          |0.592 |
-|6  |tree       |scalar           |log-transformed |0.597 |
-|7  |tree       |binary           |log-transformed |0.596 |
-|8  |tree       |binary           |binary          |0.594 |
+|4  |logistic   |binary           |binary          |0.596 |
+|5  |tree       |scalar           |scalar          |0.597 |
+|6  |tree       |scalar           |log-transformed |0.596 |
+|7  |tree       |binary           |log-transformed |0.597 |
+|8  |tree       |binary           |binary          |0.595 |
 
 ```
 [1] "auc on test of model 4 = 0.61"
@@ -231,14 +231,14 @@ Investigation 2: Results
 ========================================================
 What activities contributed to performance on each assessment card?
 
-|Card |AUC   |Significant Variables                                                                                                                 |
-|:----|:-----|:-------------------------------------------------------------------------------------------------------------------------------------|
-|5    |0.631 |(Intercept), magnify_clicked_5, time_lt_20_3, time_lt_20_4, time_lt_20_5                                                              |
-|9    |0.626 |(Intercept), label_5, magnify_clicked_9, time_lt_20_5, time_lt_20_7                                                                   |
-|12   |0.648 |label_5, label_9, hyperlink_clicked_10, time_lt_20_5, time_lt_20_9, time_lt_20_12                                                     |
-|15   |0.563 |(Intercept), time_lt_20_5, time_gt_100_15                                                                                             |
-|19   |0.616 |label_5, label_12, label_15, hyperlink_clicked_18, magnify_clicked_19, time_lt_20_2, time_lt_20_15, time_lt_20_19, time_gt_100_19     |
-|21   |0.628 |label_5, label_9, label_19, hyperlink_clicked_21, magnify_clicked_20, expert_clicked_19, time_lt_20_15, time_lt_20_20, time_gt_100_21 |
+|Card |AUC   |Significant Variables                                                                                                                                              |
+|:----|:-----|:------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|5    |0.626 |(Intercept), magnify_clicked_5, time_lt_20_3, time_lt_20_4, time_lt_20_5                                                                                           |
+|9    |0.617 |(Intercept), label_5, magnify_clicked_9, time_lt_20_7                                                                                                              |
+|12   |0.656 |label_5, label_9, hyperlink_clicked_10, time_lt_20_5, time_lt_20_9, time_lt_20_12                                                                                  |
+|15   |0.576 |(Intercept), time_lt_20_5, time_lt_20_8                                                                                                                            |
+|19   |0.611 |label_5, label_12, label_15, hyperlink_clicked_19, magnify_clicked_19, expert_clicked_15, time_lt_20_2, time_lt_20_5, time_lt_20_15, time_lt_20_19, time_gt_100_19 |
+|21   |0.628 |label_5, label_9, label_19, hyperlink_clicked_21, magnify_clicked_20, expert_clicked_19, time_lt_20_15, time_lt_20_20, time_gt_100_21                              |
 
 Investigation 2: Results
 ========================================================

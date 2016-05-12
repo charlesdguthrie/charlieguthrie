@@ -47,6 +47,9 @@ data_w = widen(df)
 train_w = data_w[[1]]
 test_w = data_w[[2]]
 
+lin_data = process_for_linear(df)
+lin_train = lin_data[[1]]
+lin_test = lin_data[[2]]
 #build models
 source('scripts/models.R')
 

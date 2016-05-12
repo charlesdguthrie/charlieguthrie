@@ -1,269 +1,345 @@
 Project Overview
-----------------
+================
 
-I'm building a model to predict a student's performance in an online
-course from his/her level of engagement in the class. The ultimate goal
-is to determine which engagement activities contribute most to student
-performance and understanding. I'm using a data set from NYU Langone
-from MedU, an online learning platform for medical courses.
+Thanks to data recorded in online courses, we can now evaluate what
+content does and does not impact student learning. By building a model
+that uses learning activity engagement to predict student assessment
+performance, we can take an analytical approach to instructional design.
+This project demonstrates this technique on the MedU CORE Radiology
+course.
+
+![MedU CORE Radiology Course](resources/logo.png)
 
 About the Data
---------------
+==============
 
 Student performance is measured by score on multiple-choice questions
-throughout the 23-card unit.  
-See a screenshot of a sample card below.
+throughout the 23-card unit. Learning activities on cards include:
+
+-   reading material
+-   links
+-   images
+-   assessments throughout
+
+Screenshot of sample learning card
+----------------------------------
 
 ![Screenshot of sample learning card](figures/card_screenshot.png)
 
-### Key Variables
+Different cards had different content and types of material on them. The
+figure below displays maps variables available on each card. ![Card
+Map](figures/card_map.png)
+
+Key Variables
+-------------
 
 Variables that may have an impact on student performance:
 
 -   Clicking hyperlinks
--   Enlarging images
--   Checking answers
+-   Magnifying images
+-   Checking answers using “expert” links
 -   Time spent on cards
 
-### Sample Data
+Run Code
+--------
+
+This loads the data and builds models for demonstration. Procedure
+explained later in the document.
 
     library(knitr)
+    setwd('~/git/edsp')
     source('scripts/explore_data.R')
+    source('scripts/processing.R')
+    source('scripts/model_functions.R')
+
     df = load_data('data/fullData.csv','data/dataDefs.csv')
 
-    source('scripts/processing.R')
+    #investigation 1a
+    lin_data = process_for_linear(df)
+    lin_train = lin_data[[1]]
+    lin_test = lin_data[[2]]
+
+    #investigation 1b
     data = process_data(df)
     train=data[[1]]
     test=data[[2]]
 
+    #investigation 2
+    data_w = widen(df)
+    train_w = data_w[[1]]
+    test_w = data_w[[2]]
+
+    #build models
+    source('scripts/models.R')
+
+Data Exploration
+================
+
+Student Assessment Score ("Success")
+------------------------------------
+
+Different questions had different measures for assessment score
+("success"). The histogram below displays distribution of student
+assessment scores.
+
     hist(train$success)
 
-![](README_files/figure-markdown_strict/unnamed-chunk-1-1.png)<!-- -->
+![](README_files/figure-markdown_strict/unnamed-chunk-2-1.png)<!-- -->
+
+Handling Time Transformation
+----------------------------
+
+Handling time was very skewed (see first chart below) so I used a
+log-transform (second chart)
 
     hist(train$handling_time)
 
-![](README_files/figure-markdown_strict/unnamed-chunk-1-2.png)<!-- -->
+![](README_files/figure-markdown_strict/unnamed-chunk-3-1.png)<!-- -->
+
+    hist(train$log_handling_time)
+
+![](README_files/figure-markdown_strict/unnamed-chunk-3-2.png)<!-- -->
+
+Engagement Activity
+-------------------
+
+Different cards had different numbers of links/magnify/expert options
+available. Most students clicked 0 or one item per unit.
 
     hist(train$hyperlink_clicks)
 
-![](README_files/figure-markdown_strict/unnamed-chunk-1-3.png)<!-- -->
+![](README_files/figure-markdown_strict/unnamed-chunk-4-1.png)<!-- -->
 
     hist(train$magnify_clicks)
 
-![](README_files/figure-markdown_strict/unnamed-chunk-1-4.png)<!-- -->
+![](README_files/figure-markdown_strict/unnamed-chunk-4-2.png)<!-- -->
 
     hist(train$expert_clicks)
 
-![](README_files/figure-markdown_strict/unnamed-chunk-1-5.png)<!-- -->
+![](README_files/figure-markdown_strict/unnamed-chunk-4-3.png)<!-- -->
 
-First Models
-------------
+Train-Test Split
+================
 
-    source('scripts/models.R')
+I split the students in the data up so that 80% were in a training set,
+and 20% were in the holdout test set.
 
-    ## Loading required package: party
+Investigation 1: Does Studying Work?
+====================================
 
-    ## Loading required package: grid
+In the first investigation I sought to establish whether there was a
+relationship between student engagement and assessment performance.
 
-    ## Loading required package: mvtnorm
+Investigation 1a:Linear Model
+-----------------------------
 
-    ## Loading required package: modeltools
+A linear model to predict student score from the available measures of
+engagement
 
-    ## Loading required package: stats4
+### Procedure
 
-    ## Loading required package: strucchange
+1.  Restructure data: 1 line per student per assessment
+    -   assessments are aggregated together
 
-    ## Loading required package: zoo
+2.  Data transformations
+    -   log-transform handling\_time
 
-    ## 
-    ## Attaching package: 'zoo'
+3.  Linear model predicts student score from measures of engagement
 
-    ## The following objects are masked from 'package:base':
-    ## 
-    ##     as.Date, as.Date.numeric
+### Results
 
-    ## Loading required package: sandwich
-
-![](README_files/figure-markdown_strict/unnamed-chunk-2-1.png)<!-- -->![](README_files/figure-markdown_strict/unnamed-chunk-2-2.png)<!-- -->
-
-### Logistic
-
-There appears to be a strong relationship between performance and clicks
-on the magnify button and expert buttons. But the relationship is less
-clear with handling time and hyperlink clicks.
-
-    mylogit <- glm(label ~ hyperlink_clicks + magnify_clicks + expert_clicks + handling_time, data = train, family = "binomial")
-    summary(mylogit)
+    lin_data = process_for_linear(df)
+    lin_train = lin_data[[1]]
+    lin_test = lin_data[[2]]
+    lin = lm(success ~ hyperlink_clicks + magnify_clicks + expert_clicks + log_handling_time, data=lin_train)
+    summary(lin)
 
     ## 
     ## Call:
-    ## glm(formula = label ~ hyperlink_clicks + magnify_clicks + expert_clicks + 
-    ##     handling_time, family = "binomial", data = train)
+    ## lm(formula = success ~ hyperlink_clicks + magnify_clicks + expert_clicks + 
+    ##     log_handling_time, data = lin_train)
     ## 
-    ## Deviance Residuals: 
-    ##     Min       1Q   Median       3Q      Max  
-    ## -2.1178  -1.2330   0.9234   1.0975   1.1369  
+    ## Residuals:
+    ##     Min      1Q  Median      3Q     Max 
+    ## -66.840 -10.708   0.301  11.593  54.103 
     ## 
     ## Coefficients:
-    ##                   Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept)      9.614e-02  2.390e-02   4.023 5.74e-05 ***
-    ## hyperlink_clicks 5.770e-02  9.976e-03   5.784 7.31e-09 ***
-    ## magnify_clicks   7.421e-02  1.178e-02   6.301 2.95e-10 ***
-    ## expert_clicks    4.636e-02  4.552e-02   1.018    0.308    
-    ## handling_time    1.999e-04  4.925e-05   4.058 4.94e-05 ***
+    ##                   Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept)        37.3517     1.6965  22.017  < 2e-16 ***
+    ## hyperlink_clicks    0.5859     0.4002   1.464    0.143    
+    ## magnify_clicks      2.4531     0.4197   5.845 5.79e-09 ***
+    ## expert_clicks      -0.3679     1.9158  -0.192    0.848    
+    ## log_handling_time   2.3354     0.3651   6.397 1.92e-10 ***
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
-    ## (Dispersion parameter for binomial family taken to be 1)
+    ## Residual standard error: 16.45 on 2278 degrees of freedom
+    ## Multiple R-squared:  0.09089,    Adjusted R-squared:  0.08929 
+    ## F-statistic: 56.93 on 4 and 2278 DF,  p-value: < 2.2e-16
+
+Investigation 1b: Binary Model, Aggregated
+------------------------------------------
+
+A logistic regression model to predict student score from the available
+measures of engagement
+
+### Procedure
+
+1.  Restructure data: 1 line per student per assessment
+
+-   assessments are aggregated together
+
+1.  Data transformations
+
+-   convert assessment scores to pass/fail
+-   converting clicks to binary
+-   binary transform of handling\_time
+
+1.  Classification model predicts if student will pass an assessment
+    given measures of engagement
+
+#### Binarizing student score
+
+To standardize the variables I converted 'success' to binary and called
+it 'label'. Label was defined as 1 if success&gt;0.5 and 0 otherwise
+
+    freq_table(train,'label')
+
+    ## [1] "Frequencies for label"
     ## 
-    ##     Null deviance: 17355  on 12708  degrees of freedom
-    ## Residual deviance: 17176  on 12704  degrees of freedom
-    ## AIC: 17186
+    ##    0    1 
+    ## 0.43 0.57
+
+#### Bucketing time spent on cards
+
+To see whether students were rushing or dragging (i.e. maybe walked away
+from the computer), I broke handling time into three segments:
+"time\_lt\_20" to indicate that the student averaged &lt;20 seconds per
+card, and "time\_gt\_100" to indicate that the student averaged &gt;100
+seconds per card.
+
+    freq_table(train,'time_lt_20')
+
+    ## [1] "Frequencies for time_lt_20"
     ## 
-    ## Number of Fisher Scoring iterations: 4
+    ##    0    1 
+    ## 0.86 0.14
 
-However, the model still needs a lot of work. It does not appear very
-accurate.
+    freq_table(train,'time_gt_100')
 
-Train Accuracy:
-
-    ##          actual
-    ## predicted    0    1
-    ##         0 4882 6133
-    ##         1  560 1134
-
-    ## [1] "accuracy:"         "0.473365331654733"
-
-Test Accuracy:
-
-    ##          actual
-    ## predicted    0    1
-    ##         0 1656 2003
-    ##         1  198  396
-
-    ## [1] "accuracy:"         "0.482482953209499"
-
-### Decision Tree
-
-Next I tried a decision tree, borrowing code from the classification
-tutorial:
-
-    mydat_tree <- ctree(label ~ hyperlink_clicks + magnify_clicks + expert_clicks + handling_time, data = train)
-    plot(mydat_tree)
-
-![](README_files/figure-markdown_strict/unnamed-chunk-6-1.png)<!-- -->
-
-Train Accuracy:
-
-    ##          actual
-    ## predicted    0    1
-    ##         0 1687 1330
-    ##         1 3755 5937
-
-    ## [1] "accuracy:"         "0.599889841844362"
-
-Test Accuracy:
-
-    ##          actual
-    ## predicted    0    1
-    ##         0  575  425
-    ##         1 1279 1974
-
-    ## [1] "accuracy:"         "0.599341641194451"
-
-Log-transform and binary variables
-----------------------------------
-
-Here I convert hyperlink, magnify and expert link clicks to binary (0 vs
-1+) and handling time to logistic
-
-    mylogit2 <- glm(label ~ hyperlink_clicked + magnify_clicked + expert_clicked + log_handling_time, data = train, family = "binomial")
-    summary(mylogit2)
-
+    ## [1] "Frequencies for time_gt_100"
     ## 
-    ## Call:
-    ## glm(formula = label ~ hyperlink_clicked + magnify_clicked + expert_clicked + 
-    ##     log_handling_time, family = "binomial", data = train)
+    ##    0    1 
+    ## 0.39 0.61
+
+#### Engagement Activity
+
+Different cards had different numbers of links/magnify/expert options
+available. In order to make engagement comparable across cards, I also
+converted engagement activities to binary. - 'hyperlink\_clicks' became
+the binary 'hyperlink\_clicked' - 'magnify\_clicks' became the binary
+'magnify\_clicked' - 'expert\_clicks' became the binary
+'expert\_clicked'
+
+    freq_table(train,'hyperlink_clicked')
+
+    ## [1] "Frequencies for hyperlink_clicked"
     ## 
-    ## Deviance Residuals: 
-    ##     Min       1Q   Median       3Q      Max  
-    ## -1.6791  -1.2461   0.8935   1.0509   1.3972  
+    ##    0    1 
+    ## 0.59 0.41
+
+    freq_table(train,'magnify_clicked')
+
+    ## [1] "Frequencies for magnify_clicked"
     ## 
-    ## Coefficients:
-    ##                   Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept)       -0.50316    0.06009  -8.373  < 2e-16 ***
-    ## hyperlink_clicked  0.19711    0.04236   4.654 3.26e-06 ***
-    ## magnify_clicked    0.23174    0.04400   5.266 1.39e-07 ***
-    ## expert_clicked     0.12669    0.07210   1.757   0.0789 .  
-    ## log_handling_time  0.13288    0.01339   9.921  < 2e-16 ***
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ##    0    1 
+    ## 0.67 0.33
+
+    freq_table(train,'expert_clicked')
+
+    ## [1] "Frequencies for expert_clicked"
     ## 
-    ## (Dispersion parameter for binomial family taken to be 1)
-    ## 
-    ##     Null deviance: 17355  on 12708  degrees of freedom
-    ## Residual deviance: 17023  on 12704  degrees of freedom
-    ## AIC: 17033
-    ## 
-    ## Number of Fisher Scoring iterations: 4
+    ##    0    1 
+    ## 0.92 0.08
 
-However, the model still needs a lot of work. It does not appear very
-accurate.
+### Models and Results of Investigation 1b
 
-Train Accuracy:
+I tried both logistic regression models and decision trees to predict
+student pass/fail, using either binary-transformed or untransformed
+variables. The table below summarizes the findings.
 
-    ##          actual
-    ## predicted    0    1
-    ##         0 4443 5294
-    ##         1  999 1973
+<table>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="left">Model Type</th>
+<th align="left">Activity Measure</th>
+<th align="left">Time Spent</th>
+<th align="left">AUC</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">1</td>
+<td align="left">logistic</td>
+<td align="left">scalar</td>
+<td align="left">scalar</td>
+<td align="left">0.589</td>
+</tr>
+<tr class="even">
+<td align="left">2</td>
+<td align="left">logistic</td>
+<td align="left">scalar</td>
+<td align="left">log-transformed</td>
+<td align="left">0.589</td>
+</tr>
+<tr class="odd">
+<td align="left">3</td>
+<td align="left">logistic</td>
+<td align="left">binary</td>
+<td align="left">log-transformed</td>
+<td align="left">0.593</td>
+</tr>
+<tr class="even">
+<td align="left">4</td>
+<td align="left">logistic</td>
+<td align="left">binary</td>
+<td align="left">binary</td>
+<td align="left">0.596</td>
+</tr>
+<tr class="odd">
+<td align="left">5</td>
+<td align="left">tree</td>
+<td align="left">scalar</td>
+<td align="left">scalar</td>
+<td align="left">0.597</td>
+</tr>
+<tr class="even">
+<td align="left">6</td>
+<td align="left">tree</td>
+<td align="left">scalar</td>
+<td align="left">log-transformed</td>
+<td align="left">0.596</td>
+</tr>
+<tr class="odd">
+<td align="left">7</td>
+<td align="left">tree</td>
+<td align="left">binary</td>
+<td align="left">log-transformed</td>
+<td align="left">0.597</td>
+</tr>
+<tr class="even">
+<td align="left">8</td>
+<td align="left">tree</td>
+<td align="left">binary</td>
+<td align="left">binary</td>
+<td align="left">0.595</td>
+</tr>
+</tbody>
+</table>
 
-    ## [1] "accuracy:"         "0.504839090408372"
-
-Test Accuracy:
-
-    ##          actual
-    ## predicted    0    1
-    ##         0 1503 1739
-    ##         1  351  660
-
-    ## [1] "accuracy:"         "0.508582177286621"
-
-### Decision Tree
-
-Decision tree with the binary and logistic variables.
-
-    mydat_tree2 <- ctree(label ~ hyperlink_clicked + magnify_clicked + expert_clicked + log_handling_time, data = train)
-    plot(mydat_tree2)
-
-![](README_files/figure-markdown_strict/unnamed-chunk-12-1.png)<!-- -->
-
-Train Accuracy:
-
-    ##          actual
-    ## predicted    0    1
-    ##         0 2150 1884
-    ##         1 3292 5383
-
-    ## [1] "accuracy:"         "0.592729561727909"
-
-Test Accuracy:
-
-    ##          actual
-    ## predicted    0    1
-    ##         0  720  623
-    ##         1 1134 1776
-
-    ## [1] "accuracy:"         "0.586879849517987"
-
-Bucketing handling time
------------------------
-
-Bucket handling time into segments: for each unit there is an indicator
-for if the student spent less than 20 seconds on it, as well an
-indicator for spending more than 100 seconds.
-
-    logit <- glm(label ~ hyperlink_clicked + magnify_clicked + expert_clicked + time_lt_20 + time_gt_100, data = train, family = "binomial")
-    print(summary(logit))
+Below is an example result from one of the models, model \#4, which is a
+logistic regression model using binary inputs and output.
 
     ## 
     ## Call:
@@ -272,763 +348,179 @@ indicator for spending more than 100 seconds.
     ## 
     ## Deviance Residuals: 
     ##     Min       1Q   Median       3Q      Max  
-    ## -1.5531  -1.2584   0.9018   1.0558   1.3168  
+    ## -1.5622  -1.2518   0.9056   1.0506   1.3147  
     ## 
     ## Coefficients:
     ##                   Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept)        0.02177    0.03803   0.573   0.5670    
-    ## hyperlink_clicked  0.16673    0.04287   3.889   0.0001 ***
-    ## magnify_clicked    0.22979    0.04387   5.238 1.63e-07 ***
-    ## expert_clicked     0.16077    0.07190   2.236   0.0254 *  
-    ## time_lt_20        -0.34354    0.06048  -5.680 1.35e-08 ***
-    ## time_gt_100        0.27130    0.04483   6.052 1.43e-09 ***
+    ## (Intercept)       -0.01487    0.03685  -0.403  0.68663    
+    ## hyperlink_clicked  0.18811    0.04131   4.554 5.28e-06 ***
+    ## magnify_clicked    0.18530    0.04233   4.377 1.20e-05 ***
+    ## expert_clicked     0.19103    0.06980   2.737  0.00621 ** 
+    ## time_lt_20        -0.30221    0.05917  -5.107 3.27e-07 ***
+    ## time_gt_100        0.32078    0.04335   7.400 1.36e-13 ***
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
     ## (Dispersion parameter for binomial family taken to be 1)
     ## 
-    ##     Null deviance: 17355  on 12708  degrees of freedom
-    ## Residual deviance: 17003  on 12703  degrees of freedom
-    ## AIC: 17015
+    ##     Null deviance: 18454  on 13510  degrees of freedom
+    ## Residual deviance: 18073  on 13505  degrees of freedom
+    ## AIC: 18085
     ## 
     ## Number of Fisher Scoring iterations: 4
 
-    tab = confusion_matrix(logit,train)
-    print(tab)
+    ## [1] "auc on test of model 4 = 0.61"
 
-    ##          actual
-    ## predicted    0    1
-    ##         0 4529 5363
-    ##         1  913 1904
+Investigation 2: Binary Model, Disaggregated
+============================================
 
-    accuracy = get_accuracy(tab)
-    print(c("logit accuracy:",accuracy))
+Which specific learning activities helped assessment score? Now that it
+has been established that studying and assessment score are correlated,
+which specific engagement activities make a student more likely to pass?
+Again I use the binary pass/fail 'label' variable and build classifiers
+to predict. But this time I will compare individual hyperlinks against
+one another, and against magnificiation clicks, etc. The goal here is to
+help instructional designers
 
-    ## [1] "logit accuracy:"   "0.506176725155402"
+Here is what the model looks like for the unit assessment on card 5:
+![Card map 5](figures/card_map_5.png) ![Model for card
+5](figures/model%202%20full.png)
 
-Spending a very short time (&lt;20 seconds) on the learning activities
-does indeed make a student less likely to succeed on the assessment. On
-the other hand spending more than 100 seconds makes a student more
-likely to succeed
+Procedure
+---------
 
-Individual Assessment Cards
----------------------------
+1.  Run lasso-regularized logistic regression using all activities
+    before assessment card
+2.  Find largest regularization parameter that is close to maximum
+    cross-validation AUC
+3.  Re-run logistic with remaining variables
+4.  Return variables that have significant impact with p-value &lt; 0.05
 
-Here I'll attempt to separate out model performance for each individual
-assessment card, rather than lumping them all together. This will solve
-two problems: one, that success is measured differently for different
-assessment cards. And two, it can tell me the relative impact that
-different activity cards have on their respective assessments. For
-example, maybe activity cards 1-4 impact assessment card 5 more than
-activities 6-9 do on assessment 10.
+Results of Investigation 2
+--------------------------
 
-    for (a in assessment_cards) {
-      cat("\n***************************************************\n----------\n|CARD",a,"|\n----------")
-      subtrain = get_single_card(train,a)
-      logit <- glm(label ~ hyperlink_clicked + magnify_clicked + expert_clicked + time_lt_20 + time_gt_100, data = subtrain, family = "binomial")
-      display_results(logit,subtrain,subtrain$label)
-      tree <- ctree(label ~ hyperlink_clicked + magnify_clicked + expert_clicked + log_handling_time, data = subtrain)
-      plot(tree)
-      tab = confusion_matrix(tree,subtrain)
-      print(tab)
-      accuracy = get_accuracy(tab)
-      print(c("tree accuracy:",accuracy))
-    }
+### Card 5
+
+According to the model, the variables that are significant in predicting
+whether a student will pass card 5 are: magnifying the image on card 5,
+and rushing/not rushing on cards 3, 4, and 5.
+
+    summary(result_5$model)
 
     ## 
-    ## ***************************************************
-    ## ----------
-    ## |CARD 5 |
-    ## ----------
     ## Call:
-    ## glm(formula = label ~ hyperlink_clicked + magnify_clicked + expert_clicked + 
-    ##     time_lt_20 + time_gt_100, family = "binomial", data = subtrain)
+    ## glm(formula = model_spec, family = "binomial", data = train)
     ## 
     ## Deviance Residuals: 
     ##     Min       1Q   Median       3Q      Max  
-    ## -1.3616  -1.1199  -0.6478   1.2360   1.8246  
-    ## 
-    ## Coefficients:
-    ##                    Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept)        -0.53630    0.09835  -5.453 4.95e-08 ***
-    ## hyperlink_clicked   0.11566    0.22962   0.504 0.614467    
-    ## magnify_clicked     0.44431    0.09756   4.554 5.26e-06 ***
-    ## expert_clicked    -12.87358  324.74371  -0.040 0.968378    
-    ## time_lt_20         -0.91856    0.24288  -3.782 0.000156 ***
-    ## time_gt_100         0.39951    0.11278   3.543 0.000396 ***
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ## 
-    ## (Dispersion parameter for binomial family taken to be 1)
-    ## 
-    ##     Null deviance: 2937.2  on 2125  degrees of freedom
-    ## Residual deviance: 2844.3  on 2120  degrees of freedom
-    ## AIC: 2856.3
-    ## 
-    ## Number of Fisher Scoring iterations: 11
-    ## 
-    ##          actual
-    ## predicted    0    1
-    ##         0 1136  990
-    ## [1] "accuracy:"         "0.534336782690499"
-
-    ##          actual
-    ## predicted    0    1
-    ##         0 1127  960
-    ##         1    9   30
-    ## [1] "tree accuracy:"    "0.544214487300094"
-    ## 
-    ## ***************************************************
-    ## ----------
-    ## |CARD 9 |
-    ## ----------
-    ## Call:
-    ## glm(formula = label ~ hyperlink_clicked + magnify_clicked + expert_clicked + 
-    ##     time_lt_20 + time_gt_100, family = "binomial", data = subtrain)
-    ## 
-    ## Deviance Residuals: 
-    ##     Min       1Q   Median       3Q      Max  
-    ## -1.6192  -1.3779   0.8763   0.9196   1.2116  
-    ## 
-    ## Coefficients: (1 not defined because of singularities)
-    ##                   Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept)         0.4600     0.1046   4.396  1.1e-05 ***
-    ## hyperlink_clicked  -0.1170     0.1121  -1.044 0.296670    
-    ## magnify_clicked     0.2377     0.1280   1.857 0.063289 .  
-    ## expert_clicked          NA         NA      NA       NA    
-    ## time_lt_20         -0.5400     0.1587  -3.402 0.000669 ***
-    ## time_gt_100         0.2990     0.1236   2.419 0.015542 *  
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ## 
-    ## (Dispersion parameter for binomial family taken to be 1)
-    ## 
-    ##     Null deviance: 2798.0  on 2149  degrees of freedom
-    ## Residual deviance: 2750.9  on 2145  degrees of freedom
-    ## AIC: 2760.9
-    ## 
-    ## Number of Fisher Scoring iterations: 4
-
-    ## Warning in predict.lm(object, newdata, se.fit, scale = 1, type =
-    ## ifelse(type == : prediction from a rank-deficient fit may be misleading
-
-![](README_files/figure-markdown_strict/unnamed-chunk-16-1.png)<!-- -->
-
-    ##          actual
-    ## predicted    0    1
-    ##         0  288  358
-    ##         1  476 1028
-    ## [1] "accuracy:"         "0.612093023255814"
-
-    ##          actual
-    ## predicted    0    1
-    ##         0  177  171
-    ##         1  587 1215
-    ## [1] "tree accuracy:"    "0.647441860465116"
-    ## 
-    ## ***************************************************
-    ## ----------
-    ## |CARD 12 |
-    ## ----------
-    ## Call:
-    ## glm(formula = label ~ hyperlink_clicked + magnify_clicked + expert_clicked + 
-    ##     time_lt_20 + time_gt_100, family = "binomial", data = subtrain)
-    ## 
-    ## Deviance Residuals: 
-    ##     Min       1Q   Median       3Q      Max  
-    ## -1.5342  -1.3006   0.8585   0.9685   1.6161  
-    ## 
-    ## Coefficients: (1 not defined because of singularities)
-    ##                   Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept)        0.08370    0.08701   0.962  0.33606    
-    ## hyperlink_clicked  0.29471    0.10707   2.753  0.00591 ** 
-    ## magnify_clicked    0.22869    0.11339   2.017  0.04371 *  
-    ## expert_clicked          NA         NA      NA       NA    
-    ## time_lt_20        -1.07351    0.21627  -4.964 6.91e-07 ***
-    ## time_gt_100        0.20126    0.11215   1.795  0.07273 .  
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ## 
-    ## (Dispersion parameter for binomial family taken to be 1)
-    ## 
-    ##     Null deviance: 2876.8  on 2125  degrees of freedom
-    ## Residual deviance: 2789.3  on 2121  degrees of freedom
-    ## AIC: 2799.3
-    ## 
-    ## Number of Fisher Scoring iterations: 4
-
-    ## Warning in predict.lm(object, newdata, se.fit, scale = 1, type =
-    ## ifelse(type == : prediction from a rank-deficient fit may be misleading
-
-![](README_files/figure-markdown_strict/unnamed-chunk-16-2.png)<!-- -->
-
-    ##          actual
-    ## predicted   0   1
-    ##         0 507 545
-    ##         1 363 711
-    ## [1] "accuracy:"         "0.572906867356538"
-
-![](README_files/figure-markdown_strict/unnamed-chunk-16-3.png)<!-- -->
-
-    ##          actual
-    ## predicted   0   1
-    ##         0 458 477
-    ##         1 412 779
-    ## [1] "tree accuracy:"    "0.581843838193791"
-    ## 
-    ## ***************************************************
-    ## ----------
-    ## |CARD 15 |
-    ## ----------
-    ## Call:
-    ## glm(formula = label ~ hyperlink_clicked + magnify_clicked + expert_clicked + 
-    ##     time_lt_20 + time_gt_100, family = "binomial", data = subtrain)
-    ## 
-    ## Deviance Residuals: 
-    ##     Min       1Q   Median       3Q      Max  
-    ## -1.4902  -1.1964   0.9027   1.0027   1.1814  
-    ## 
-    ## Coefficients:
-    ##                   Estimate Std. Error z value Pr(>|z|)   
-    ## (Intercept)        0.03218    0.10720   0.300  0.76407   
-    ## hyperlink_clicked -0.01104    0.12696  -0.087  0.93068   
-    ## magnify_clicked    0.26120    0.11296   2.312  0.02076 * 
-    ## expert_clicked     0.02348    0.12274   0.191  0.84832   
-    ## time_lt_20        -0.03052    0.14937  -0.204  0.83811   
-    ## time_gt_100        0.39381    0.12994   3.031  0.00244 **
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ## 
-    ## (Dispersion parameter for binomial family taken to be 1)
-    ## 
-    ##     Null deviance: 2782.3  on 2062  degrees of freedom
-    ## Residual deviance: 2742.3  on 2057  degrees of freedom
-    ## AIC: 2754.3
-    ## 
-    ## Number of Fisher Scoring iterations: 4
-    ## 
-    ##          actual
-    ## predicted   0   1
-    ##         0 537 659
-    ##         1 295 572
-    ## [1] "accuracy:"         "0.537566650508968"
-
-![](README_files/figure-markdown_strict/unnamed-chunk-16-4.png)<!-- -->
-
-    ##          actual
-    ## predicted   0   1
-    ##         0 331 324
-    ##         1 501 907
-    ## [1] "tree accuracy:"    "0.600096946194862"
-    ## 
-    ## ***************************************************
-    ## ----------
-    ## |CARD 19 |
-    ## ----------
-    ## Call:
-    ## glm(formula = label ~ hyperlink_clicked + magnify_clicked + expert_clicked + 
-    ##     time_lt_20 + time_gt_100, family = "binomial", data = subtrain)
-    ## 
-    ## Deviance Residuals: 
-    ##     Min       1Q   Median       3Q      Max  
-    ## -1.5787  -1.4302   0.8236   0.8946   1.1255  
-    ## 
-    ## Coefficients:
-    ##                     Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept)        5.770e-01  1.039e-01   5.554 2.79e-08 ***
-    ## hyperlink_clicked  4.886e-02  1.275e-01   0.383  0.70155    
-    ## magnify_clicked    1.978e-01  1.150e-01   1.720  0.08550 .  
-    ## expert_clicked     2.837e-05  1.128e-01   0.000  0.99980    
-    ## time_lt_20        -4.537e-01  1.545e-01  -2.937  0.00332 ** 
-    ## time_gt_100        8.336e-02  1.280e-01   0.651  0.51503    
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ## 
-    ## (Dispersion parameter for binomial family taken to be 1)
-    ## 
-    ##     Null deviance: 2754.2  on 2156  degrees of freedom
-    ## Residual deviance: 2720.7  on 2151  degrees of freedom
-    ## AIC: 2732.7
-    ## 
-    ## Number of Fisher Scoring iterations: 4
-    ## 
-    ##          actual
-    ## predicted    0    1
-    ##         0  142  161
-    ##         1  583 1271
-    ## [1] "accuracy:"         "0.655076495132128"
-
-    ##          actual
-    ## predicted    0    1
-    ##         0  181  204
-    ##         1  544 1228
-    ## [1] "tree accuracy:"    "0.653222067686602"
-    ## 
-    ## ***************************************************
-    ## ----------
-    ## |CARD 21 |
-    ## ----------
-    ## Call:
-    ## glm(formula = label ~ hyperlink_clicked + magnify_clicked + expert_clicked + 
-    ##     time_lt_20 + time_gt_100, family = "binomial", data = subtrain)
-    ## 
-    ## Deviance Residuals: 
-    ##     Min       1Q   Median       3Q      Max  
-    ## -1.3193  -1.1118  -0.9688   1.2189   1.4014  
-    ## 
-    ## Coefficients: (1 not defined because of singularities)
-    ##                   Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept)       -0.18993    0.09330  -2.036 0.041782 *  
-    ## hyperlink_clicked  0.03367    0.11600   0.290 0.771625    
-    ## magnify_clicked    0.39089    0.11473   3.407 0.000657 ***
-    ## expert_clicked          NA         NA      NA       NA    
-    ## time_lt_20        -0.32269    0.12263  -2.631 0.008507 ** 
-    ## time_gt_100        0.09283    0.11181   0.830 0.406430    
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ## 
-    ## (Dispersion parameter for binomial family taken to be 1)
-    ## 
-    ##     Null deviance: 2883.4  on 2086  degrees of freedom
-    ## Residual deviance: 2837.6  on 2082  degrees of freedom
-    ## AIC: 2847.6
-    ## 
-    ## Number of Fisher Scoring iterations: 4
-
-    ## Warning in predict.lm(object, newdata, se.fit, scale = 1, type =
-    ## ifelse(type == : prediction from a rank-deficient fit may be misleading
-
-![](README_files/figure-markdown_strict/unnamed-chunk-16-5.png)<!-- -->
-
-    ##          actual
-    ## predicted    0    1
-    ##         0 1115  972
-    ## [1] "accuracy:"         "0.534259702922856"
-
-![](README_files/figure-markdown_strict/unnamed-chunk-16-6.png)<!-- -->
-
-    ##          actual
-    ## predicted   0   1
-    ##         0 908 671
-    ##         1 207 301
-    ## [1] "tree accuracy:"    "0.579300431241016"
-
-Individual Assessment Cards and Engagement Cards
-------------------------------------------------
-
-Here I split further to try and measure the impact of each engagement
-card's components on student performance. For example, rather than
-combining cards 1-4 and measuring the aggregate impact on performance, I
-consider engagement activities from card 1 separately from engagement
-activities on card 2, etc.
-
-    data_w = widen(df)
-    train_w = data_w[[1]]
-    test_w = data_w[[2]]
-
-Modeling engagement activities associated with the assessment on card 5:
-
-    logit <- glm(label_5 ~ 
-                   hyperlink_clicked_1 + hyperlink_clicked_2 + hyperlink_clicked_4 + hyperlink_clicked_5 
-                 + magnify_clicked_4 + magnify_clicked_5 
-                 + time_lt_20_1 + time_lt_20_2 + time_lt_20_3 + time_lt_20_4 + time_lt_20_5
-                 + time_gt_100_1 + time_gt_100_2 + time_gt_100_3 + time_gt_100_4 + time_gt_100_5,
-                 data=train_w, family="binomial")
-    display_results(logit,train_w,train_w$label_5,threshold=0.3)
-
-    ## 
-    ## Call:
-    ## glm(formula = label_5 ~ hyperlink_clicked_1 + hyperlink_clicked_2 + 
-    ##     hyperlink_clicked_4 + hyperlink_clicked_5 + magnify_clicked_4 + 
-    ##     magnify_clicked_5 + time_lt_20_1 + time_lt_20_2 + time_lt_20_3 + 
-    ##     time_lt_20_4 + time_lt_20_5 + time_gt_100_1 + time_gt_100_2 + 
-    ##     time_gt_100_3 + time_gt_100_4 + time_gt_100_5, family = "binomial", 
-    ##     data = train_w)
-    ## 
-    ## Deviance Residuals: 
-    ##    Min      1Q  Median      3Q     Max  
-    ## -1.570  -1.107  -0.295   1.080   2.561  
-    ## 
-    ## Coefficients:
-    ##                       Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept)          -0.510039   0.206719  -2.467   0.0136 *  
-    ## hyperlink_clicked_1   0.335857   0.251439   1.336   0.1816    
-    ## hyperlink_clicked_2  12.048003 324.743842   0.037   0.9704    
-    ## hyperlink_clicked_4 -12.088941 324.743756  -0.037   0.9703    
-    ## hyperlink_clicked_5   0.015261   0.108901   0.140   0.8885    
-    ## magnify_clicked_4     0.203664   0.116659   1.746   0.0808 .  
-    ## magnify_clicked_5     0.473317   0.111157   4.258 2.06e-05 ***
-    ## time_lt_20_1          0.057108   0.117257   0.487   0.6262    
-    ## time_lt_20_2          0.097996   0.148316   0.661   0.5088    
-    ## time_lt_20_3         -0.361159   0.142264  -2.539   0.0111 *  
-    ## time_lt_20_4         -0.325851   0.140242  -2.323   0.0202 *  
-    ## time_lt_20_5         -2.071157   0.472690  -4.382 1.18e-05 ***
-    ## time_gt_100_1         0.026534   0.159972   0.166   0.8683    
-    ## time_gt_100_2        -0.009543   0.212809  -0.045   0.9642    
-    ## time_gt_100_3        -0.096651   0.111142  -0.870   0.3845    
-    ## time_gt_100_4        -0.096790   0.116747  -0.829   0.4071    
-    ## time_gt_100_5         0.244161   0.122238   1.997   0.0458 *  
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ## 
-    ## (Dispersion parameter for binomial family taken to be 1)
-    ## 
-    ##     Null deviance: 2940.4  on 2128  degrees of freedom
-    ## Residual deviance: 2732.0  on 2112  degrees of freedom
-    ##   (35 observations deleted due to missingness)
-    ## AIC: 2766
-    ## 
-    ## Number of Fisher Scoring iterations: 11
-    ## 
-    ##          actual
-    ## predicted   0   1
-    ##         0 902 628
-    ##         1 239 360
-    ## [1] "accuracy:"         "0.592766557069046"
-
-    display_results(logit,test_w,test_w$label_5)
-
-    ## 
-    ## Call:
-    ## glm(formula = label_5 ~ hyperlink_clicked_1 + hyperlink_clicked_2 + 
-    ##     hyperlink_clicked_4 + hyperlink_clicked_5 + magnify_clicked_4 + 
-    ##     magnify_clicked_5 + time_lt_20_1 + time_lt_20_2 + time_lt_20_3 + 
-    ##     time_lt_20_4 + time_lt_20_5 + time_gt_100_1 + time_gt_100_2 + 
-    ##     time_gt_100_3 + time_gt_100_4 + time_gt_100_5, family = "binomial", 
-    ##     data = train_w)
-    ## 
-    ## Deviance Residuals: 
-    ##    Min      1Q  Median      3Q     Max  
-    ## -1.570  -1.107  -0.295   1.080   2.561  
-    ## 
-    ## Coefficients:
-    ##                       Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept)          -0.510039   0.206719  -2.467   0.0136 *  
-    ## hyperlink_clicked_1   0.335857   0.251439   1.336   0.1816    
-    ## hyperlink_clicked_2  12.048003 324.743842   0.037   0.9704    
-    ## hyperlink_clicked_4 -12.088941 324.743756  -0.037   0.9703    
-    ## hyperlink_clicked_5   0.015261   0.108901   0.140   0.8885    
-    ## magnify_clicked_4     0.203664   0.116659   1.746   0.0808 .  
-    ## magnify_clicked_5     0.473317   0.111157   4.258 2.06e-05 ***
-    ## time_lt_20_1          0.057108   0.117257   0.487   0.6262    
-    ## time_lt_20_2          0.097996   0.148316   0.661   0.5088    
-    ## time_lt_20_3         -0.361159   0.142264  -2.539   0.0111 *  
-    ## time_lt_20_4         -0.325851   0.140242  -2.323   0.0202 *  
-    ## time_lt_20_5         -2.071157   0.472690  -4.382 1.18e-05 ***
-    ## time_gt_100_1         0.026534   0.159972   0.166   0.8683    
-    ## time_gt_100_2        -0.009543   0.212809  -0.045   0.9642    
-    ## time_gt_100_3        -0.096651   0.111142  -0.870   0.3845    
-    ## time_gt_100_4        -0.096790   0.116747  -0.829   0.4071    
-    ## time_gt_100_5         0.244161   0.122238   1.997   0.0458 *  
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ## 
-    ## (Dispersion parameter for binomial family taken to be 1)
-    ## 
-    ##     Null deviance: 2940.4  on 2128  degrees of freedom
-    ## Residual deviance: 2732.0  on 2112  degrees of freedom
-    ##   (35 observations deleted due to missingness)
-    ## AIC: 2766
-    ## 
-    ## Number of Fisher Scoring iterations: 11
-    ## 
-    ##          actual
-    ## predicted   0   1
-    ##         0 390 330
-    ##         1   7  13
-    ## [1] "accuracy:"         "0.544594594594595"
-
-Refining the model:
-
-    logit <- glm(label_5 ~ 
-                 magnify_clicked_5 
-                 + time_lt_20_3 + time_lt_20_4 + time_lt_20_5,
-                 data=train_w, family="binomial")
-    display_results(logit,train_w,train_w$label_5,0.1)
-
-    ## 
-    ## Call:
-    ## glm(formula = label_5 ~ magnify_clicked_5 + time_lt_20_3 + time_lt_20_4 + 
-    ##     time_lt_20_5, family = "binomial", data = train_w)
-    ## 
-    ## Deviance Residuals: 
-    ##     Min       1Q   Median       3Q      Max  
-    ## -1.3205  -1.0706  -0.2943   1.0408   2.5143  
+    ## -1.3379  -1.0865  -0.3392   1.0250   2.4017  
     ## 
     ## Coefficients:
     ##                   Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept)       -0.25643    0.08761  -2.927 0.003422 ** 
-    ## magnify_clicked_5  0.58671    0.09769   6.006 1.90e-09 ***
-    ## time_lt_20_3      -0.34792    0.13265  -2.623 0.008717 ** 
-    ## time_lt_20_4      -0.42684    0.12330  -3.462 0.000537 ***
-    ## time_lt_20_5      -2.08647    0.47112  -4.429 9.48e-06 ***
+    ## (Intercept)        -0.3877     0.1184  -3.273  0.00106 ** 
+    ## magnify_clicked_5   0.5875     0.0949   6.191 5.99e-10 ***
+    ## time_lt_20_3       -0.3543     0.1301  -2.723  0.00646 ** 
+    ## time_lt_20_4       -0.3311     0.1278  -2.590  0.00960 ** 
+    ## time_lt_20_5       -1.7534     0.4050  -4.329 1.50e-05 ***
+    ## time_gt_100_5       0.1700     0.1110   1.532  0.12556    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
     ## (Dispersion parameter for binomial family taken to be 1)
     ## 
-    ##     Null deviance: 2940.4  on 2128  degrees of freedom
-    ## Residual deviance: 2744.7  on 2124  degrees of freedom
-    ##   (35 observations deleted due to missingness)
-    ## AIC: 2754.7
+    ##     Null deviance: 3154.1  on 2282  degrees of freedom
+    ## Residual deviance: 2945.6  on 2277  degrees of freedom
+    ##   (39 observations deleted due to missingness)
+    ## AIC: 2957.6
     ## 
     ## Number of Fisher Scoring iterations: 5
-    ## 
-    ##          actual
-    ## predicted   0   1
-    ##         0 723 431
-    ##         1 418 557
-    ## [1] "accuracy:"         "0.601221230624706"
 
-Modeling engagement activities associated with the assessment on card 9:
+    print(result_5$auc)
 
-    logit <- glm(label_9 ~ 
-                   hyperlink_clicked_1 + hyperlink_clicked_2 + hyperlink_clicked_4 + hyperlink_clicked_5 + hyperlink_clicked_6 + hyperlink_clicked_8 + hyperlink_clicked_9
-                 + magnify_clicked_4 + magnify_clicked_5 + magnify_clicked_7 + magnify_clicked_9 
-                 + time_lt_20_1 + time_lt_20_2 + time_lt_20_3 + time_lt_20_4 + time_lt_20_5 + time_lt_20_6 + time_lt_20_7 + time_lt_20_8 + time_lt_20_9
-                 + time_gt_100_1 + time_gt_100_2 + time_gt_100_3 + time_gt_100_4 + time_gt_100_5 + time_gt_100_6 + time_gt_100_7 + time_gt_100_8 + time_gt_100_9,
-                 data=train_w, family="binomial")
-    display_results(logit,train_w,train_w$label_5,threshold=0.3)
+    ## [1] 0.625
 
-    ## 
-    ## Call:
-    ## glm(formula = label_9 ~ hyperlink_clicked_1 + hyperlink_clicked_2 + 
-    ##     hyperlink_clicked_4 + hyperlink_clicked_5 + hyperlink_clicked_6 + 
-    ##     hyperlink_clicked_8 + hyperlink_clicked_9 + magnify_clicked_4 + 
-    ##     magnify_clicked_5 + magnify_clicked_7 + magnify_clicked_9 + 
-    ##     time_lt_20_1 + time_lt_20_2 + time_lt_20_3 + time_lt_20_4 + 
-    ##     time_lt_20_5 + time_lt_20_6 + time_lt_20_7 + time_lt_20_8 + 
-    ##     time_lt_20_9 + time_gt_100_1 + time_gt_100_2 + time_gt_100_3 + 
-    ##     time_gt_100_4 + time_gt_100_5 + time_gt_100_6 + time_gt_100_7 + 
-    ##     time_gt_100_8 + time_gt_100_9, family = "binomial", data = train_w)
-    ## 
-    ## Deviance Residuals: 
-    ##     Min       1Q   Median       3Q      Max  
-    ## -1.9076  -1.2742   0.7663   0.9316   1.5973  
-    ## 
-    ## Coefficients:
-    ##                       Estimate Std. Error z value Pr(>|z|)   
-    ## (Intercept)           0.681963   0.228463   2.985  0.00284 **
-    ## hyperlink_clicked_1  -0.007410   0.254755  -0.029  0.97679   
-    ## hyperlink_clicked_2 -14.583743 535.411312  -0.027  0.97827   
-    ## hyperlink_clicked_4  12.846225 535.411268   0.024  0.98086   
-    ## hyperlink_clicked_5   0.207791   0.132831   1.564  0.11774   
-    ## hyperlink_clicked_6  -0.094231   0.131760  -0.715  0.47450   
-    ## hyperlink_clicked_8 -14.062157 535.411229  -0.026  0.97905   
-    ## hyperlink_clicked_9  -0.243756   0.128045  -1.904  0.05695 . 
-    ## magnify_clicked_4    -0.063821   0.131419  -0.486  0.62723   
-    ## magnify_clicked_5    -0.005041   0.170395  -0.030  0.97640   
-    ## magnify_clicked_7     0.393703   0.144931   2.716  0.00660 **
-    ## magnify_clicked_9     0.377993   0.168972   2.237  0.02529 * 
-    ## time_lt_20_1          0.105784   0.121132   0.873  0.38250   
-    ## time_lt_20_2          0.160408   0.153433   1.045  0.29581   
-    ## time_lt_20_3          0.039551   0.156160   0.253  0.80006   
-    ## time_lt_20_4         -0.111625   0.155478  -0.718  0.47279   
-    ## time_lt_20_5         -0.356981   0.270707  -1.319  0.18727   
-    ## time_lt_20_6         -0.152238   0.159329  -0.955  0.33933   
-    ## time_lt_20_7         -0.291437   0.168617  -1.728  0.08392 . 
-    ## time_lt_20_8         -0.256704   0.155651  -1.649  0.09910 . 
-    ## time_lt_20_9         -0.496804   0.263656  -1.884  0.05953 . 
-    ## time_gt_100_1        -0.164300   0.164156  -1.001  0.31689   
-    ## time_gt_100_2         0.183521   0.224655   0.817  0.41398   
-    ## time_gt_100_3        -0.160462   0.123016  -1.304  0.19210   
-    ## time_gt_100_4         0.144660   0.132459   1.092  0.27478   
-    ## time_gt_100_5        -0.079679   0.136525  -0.584  0.55947   
-    ## time_gt_100_6        -0.067041   0.132393  -0.506  0.61259   
-    ## time_gt_100_7         0.059152   0.136154   0.434  0.66396   
-    ## time_gt_100_8        -0.008352   0.130683  -0.064  0.94904   
-    ## time_gt_100_9        -0.270271   0.122208  -2.212  0.02700 * 
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ## 
-    ## (Dispersion parameter for binomial family taken to be 1)
-    ## 
-    ##     Null deviance: 2751.4  on 2115  degrees of freedom
-    ## Residual deviance: 2634.0  on 2086  degrees of freedom
-    ##   (48 observations deleted due to missingness)
-    ## AIC: 2694
-    ## 
-    ## Number of Fisher Scoring iterations: 12
-    ## 
-    ##          actual
-    ## predicted   0   1
-    ##         0 345 116
-    ##         1 787 868
-    ## [1] "accuracy:"         "0.573251417769376"
+![Card 5 results figure](figures/trained%20model%205.png)
 
-    display_results(logit,test_w,test_w$label_5)
+Results Table
+-------------
 
-    ## 
-    ## Call:
-    ## glm(formula = label_9 ~ hyperlink_clicked_1 + hyperlink_clicked_2 + 
-    ##     hyperlink_clicked_4 + hyperlink_clicked_5 + hyperlink_clicked_6 + 
-    ##     hyperlink_clicked_8 + hyperlink_clicked_9 + magnify_clicked_4 + 
-    ##     magnify_clicked_5 + magnify_clicked_7 + magnify_clicked_9 + 
-    ##     time_lt_20_1 + time_lt_20_2 + time_lt_20_3 + time_lt_20_4 + 
-    ##     time_lt_20_5 + time_lt_20_6 + time_lt_20_7 + time_lt_20_8 + 
-    ##     time_lt_20_9 + time_gt_100_1 + time_gt_100_2 + time_gt_100_3 + 
-    ##     time_gt_100_4 + time_gt_100_5 + time_gt_100_6 + time_gt_100_7 + 
-    ##     time_gt_100_8 + time_gt_100_9, family = "binomial", data = train_w)
-    ## 
-    ## Deviance Residuals: 
-    ##     Min       1Q   Median       3Q      Max  
-    ## -1.9076  -1.2742   0.7663   0.9316   1.5973  
-    ## 
-    ## Coefficients:
-    ##                       Estimate Std. Error z value Pr(>|z|)   
-    ## (Intercept)           0.681963   0.228463   2.985  0.00284 **
-    ## hyperlink_clicked_1  -0.007410   0.254755  -0.029  0.97679   
-    ## hyperlink_clicked_2 -14.583743 535.411312  -0.027  0.97827   
-    ## hyperlink_clicked_4  12.846225 535.411268   0.024  0.98086   
-    ## hyperlink_clicked_5   0.207791   0.132831   1.564  0.11774   
-    ## hyperlink_clicked_6  -0.094231   0.131760  -0.715  0.47450   
-    ## hyperlink_clicked_8 -14.062157 535.411229  -0.026  0.97905   
-    ## hyperlink_clicked_9  -0.243756   0.128045  -1.904  0.05695 . 
-    ## magnify_clicked_4    -0.063821   0.131419  -0.486  0.62723   
-    ## magnify_clicked_5    -0.005041   0.170395  -0.030  0.97640   
-    ## magnify_clicked_7     0.393703   0.144931   2.716  0.00660 **
-    ## magnify_clicked_9     0.377993   0.168972   2.237  0.02529 * 
-    ## time_lt_20_1          0.105784   0.121132   0.873  0.38250   
-    ## time_lt_20_2          0.160408   0.153433   1.045  0.29581   
-    ## time_lt_20_3          0.039551   0.156160   0.253  0.80006   
-    ## time_lt_20_4         -0.111625   0.155478  -0.718  0.47279   
-    ## time_lt_20_5         -0.356981   0.270707  -1.319  0.18727   
-    ## time_lt_20_6         -0.152238   0.159329  -0.955  0.33933   
-    ## time_lt_20_7         -0.291437   0.168617  -1.728  0.08392 . 
-    ## time_lt_20_8         -0.256704   0.155651  -1.649  0.09910 . 
-    ## time_lt_20_9         -0.496804   0.263656  -1.884  0.05953 . 
-    ## time_gt_100_1        -0.164300   0.164156  -1.001  0.31689   
-    ## time_gt_100_2         0.183521   0.224655   0.817  0.41398   
-    ## time_gt_100_3        -0.160462   0.123016  -1.304  0.19210   
-    ## time_gt_100_4         0.144660   0.132459   1.092  0.27478   
-    ## time_gt_100_5        -0.079679   0.136525  -0.584  0.55947   
-    ## time_gt_100_6        -0.067041   0.132393  -0.506  0.61259   
-    ## time_gt_100_7         0.059152   0.136154   0.434  0.66396   
-    ## time_gt_100_8        -0.008352   0.130683  -0.064  0.94904   
-    ## time_gt_100_9        -0.270271   0.122208  -2.212  0.02700 * 
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ## 
-    ## (Dispersion parameter for binomial family taken to be 1)
-    ## 
-    ##     Null deviance: 2751.4  on 2115  degrees of freedom
-    ## Residual deviance: 2634.0  on 2086  degrees of freedom
-    ##   (48 observations deleted due to missingness)
-    ## AIC: 2694
-    ## 
-    ## Number of Fisher Scoring iterations: 12
-    ## 
-    ##          actual
-    ## predicted   0   1
-    ##         0 209 131
-    ##         1 182 212
-    ## [1] "accuracy:"         "0.573569482288828"
+The table below presents the significant predictors of student passing.
+Note that to predict whether a student passed the assessment on card 9,
+I included an indicator for whether he/she passed card 5. This is
+included as 'label\_5', and is a significant predictor. I did the same
+for later unit assessments.
 
-Refining model 9:
+    resultsDF = get_resultsDF()
+    kable(resultsDF)
 
-    logit <- glm(label_9 ~ 
-                   hyperlink_clicked_6 + hyperlink_clicked_8 + hyperlink_clicked_9
-                 + magnify_clicked_7 + magnify_clicked_9 
-                 + time_lt_20_6 + time_lt_20_7 + time_lt_20_8 + time_lt_20_9
-                 + time_gt_100_6 + time_gt_100_7 + time_gt_100_8 + time_gt_100_9,
-                 data=train_w, family="binomial")
-    display_results(logit,train_w,train_w$label_5,threshold=0.3)
+<table>
+<thead>
+<tr class="header">
+<th align="left">Card</th>
+<th align="left">AUC</th>
+<th align="left">Significant Variables</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">5</td>
+<td align="left">0.625</td>
+<td align="left">(Intercept), magnify_clicked_5, time_lt_20_3, time_lt_20_4, time_lt_20_5</td>
+</tr>
+<tr class="even">
+<td align="left">9</td>
+<td align="left">0.618</td>
+<td align="left">(Intercept), label_5, magnify_clicked_9, time_lt_20_5, time_lt_20_7</td>
+</tr>
+<tr class="odd">
+<td align="left">12</td>
+<td align="left">0.66</td>
+<td align="left">label_5, label_9, hyperlink_clicked_10, time_lt_20_5, time_lt_20_9, time_lt_20_12</td>
+</tr>
+<tr class="even">
+<td align="left">15</td>
+<td align="left">0.57</td>
+<td align="left">(Intercept), time_lt_20_5, time_gt_100_15</td>
+</tr>
+<tr class="odd">
+<td align="left">19</td>
+<td align="left">0.611</td>
+<td align="left">label_5, label_12, label_15, hyperlink_clicked_19, magnify_clicked_19, expert_clicked_15, time_lt_20_2, time_lt_20_5, time_lt_20_15, time_lt_20_19, time_gt_100_19</td>
+</tr>
+<tr class="even">
+<td align="left">21</td>
+<td align="left">0.628</td>
+<td align="left">label_5, label_9, label_19, hyperlink_clicked_21, magnify_clicked_20, expert_clicked_19, time_lt_20_15, time_lt_20_20, time_gt_100_21</td>
+</tr>
+</tbody>
+</table>
 
-    ## 
-    ## Call:
-    ## glm(formula = label_9 ~ hyperlink_clicked_6 + hyperlink_clicked_8 + 
-    ##     hyperlink_clicked_9 + magnify_clicked_7 + magnify_clicked_9 + 
-    ##     time_lt_20_6 + time_lt_20_7 + time_lt_20_8 + time_lt_20_9 + 
-    ##     time_gt_100_6 + time_gt_100_7 + time_gt_100_8 + time_gt_100_9, 
-    ##     family = "binomial", data = train_w)
-    ## 
-    ## Deviance Residuals: 
-    ##     Min       1Q   Median       3Q      Max  
-    ## -1.8812  -1.2965   0.7818   0.9180   1.4597  
-    ## 
-    ## Coefficients:
-    ##                       Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept)           0.826818   0.135111   6.120 9.39e-10 ***
-    ## hyperlink_clicked_6  -0.047680   0.126760  -0.376 0.706813    
-    ## hyperlink_clicked_8 -13.054659 324.743730  -0.040 0.967934    
-    ## hyperlink_clicked_9  -0.168962   0.116982  -1.444 0.148643    
-    ## magnify_clicked_7     0.375384   0.139810   2.685 0.007254 ** 
-    ## magnify_clicked_9     0.374289   0.112142   3.338 0.000845 ***
-    ## time_lt_20_6         -0.174179   0.153859  -1.132 0.257604    
-    ## time_lt_20_7         -0.316956   0.159382  -1.989 0.046739 *  
-    ## time_lt_20_8         -0.270235   0.150608  -1.794 0.072767 .  
-    ## time_lt_20_9         -0.660644   0.220271  -2.999 0.002707 ** 
-    ## time_gt_100_6        -0.117913   0.127296  -0.926 0.354296    
-    ## time_gt_100_7         0.060962   0.131051   0.465 0.641805    
-    ## time_gt_100_8        -0.007227   0.128064  -0.056 0.955000    
-    ## time_gt_100_9        -0.274043   0.117160  -2.339 0.019332 *  
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ## 
-    ## (Dispersion parameter for binomial family taken to be 1)
-    ## 
-    ##     Null deviance: 2751.4  on 2115  degrees of freedom
-    ## Residual deviance: 2650.9  on 2102  degrees of freedom
-    ##   (48 observations deleted due to missingness)
-    ## AIC: 2678.9
-    ## 
-    ## Number of Fisher Scoring iterations: 11
-    ## 
-    ##          actual
-    ## predicted   0   1
-    ##         0 334 111
-    ##         1 798 873
-    ## [1] "accuracy:"         "0.570415879017013"
-
-    display_results(logit,test_w,test_w$label_5)
-
-    ## 
-    ## Call:
-    ## glm(formula = label_9 ~ hyperlink_clicked_6 + hyperlink_clicked_8 + 
-    ##     hyperlink_clicked_9 + magnify_clicked_7 + magnify_clicked_9 + 
-    ##     time_lt_20_6 + time_lt_20_7 + time_lt_20_8 + time_lt_20_9 + 
-    ##     time_gt_100_6 + time_gt_100_7 + time_gt_100_8 + time_gt_100_9, 
-    ##     family = "binomial", data = train_w)
-    ## 
-    ## Deviance Residuals: 
-    ##     Min       1Q   Median       3Q      Max  
-    ## -1.8812  -1.2965   0.7818   0.9180   1.4597  
-    ## 
-    ## Coefficients:
-    ##                       Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept)           0.826818   0.135111   6.120 9.39e-10 ***
-    ## hyperlink_clicked_6  -0.047680   0.126760  -0.376 0.706813    
-    ## hyperlink_clicked_8 -13.054659 324.743730  -0.040 0.967934    
-    ## hyperlink_clicked_9  -0.168962   0.116982  -1.444 0.148643    
-    ## magnify_clicked_7     0.375384   0.139810   2.685 0.007254 ** 
-    ## magnify_clicked_9     0.374289   0.112142   3.338 0.000845 ***
-    ## time_lt_20_6         -0.174179   0.153859  -1.132 0.257604    
-    ## time_lt_20_7         -0.316956   0.159382  -1.989 0.046739 *  
-    ## time_lt_20_8         -0.270235   0.150608  -1.794 0.072767 .  
-    ## time_lt_20_9         -0.660644   0.220271  -2.999 0.002707 ** 
-    ## time_gt_100_6        -0.117913   0.127296  -0.926 0.354296    
-    ## time_gt_100_7         0.060962   0.131051   0.465 0.641805    
-    ## time_gt_100_8        -0.007227   0.128064  -0.056 0.955000    
-    ## time_gt_100_9        -0.274043   0.117160  -2.339 0.019332 *  
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ## 
-    ## (Dispersion parameter for binomial family taken to be 1)
-    ## 
-    ##     Null deviance: 2751.4  on 2115  degrees of freedom
-    ## Residual deviance: 2650.9  on 2102  degrees of freedom
-    ##   (48 observations deleted due to missingness)
-    ## AIC: 2678.9
-    ## 
-    ## Number of Fisher Scoring iterations: 11
-    ## 
-    ##          actual
-    ## predicted   0   1
-    ##         0 201 105
-    ##         1 192 238
-    ## [1] "accuracy:"         "0.596467391304348"
+The following image is another representation of significant predictors.
+Variables that were significant predictors for any assessment are boxed
+in black.  
+![Result Map](figures/results%20map.png)
 
 Next Steps
-----------
+==========
 
-Come up with the best model from this log
+The next step is to examine the content of the MedU course and see if
+the findings of these investigations make intuitive sense. It may be
+obvious, for example, that magnifying the image in card 5 is the most
+significant predictor of passing card 5 because the question can't be
+answered without it. Furthermore I'd like to get ahold of a more robust,
+summative assessment that would be a more reliable measure of student
+understanding.
+
+From there I would want to discuss the results with the MedU
+instructional designers and advise them to cut material that doesn't
+contribute to understanding, or add assessment questions to measure
+learning in cards that aren't currently significant predictors.
+
+Eventually I'd like to make this content reusable for any online course.
+
+Acknowledgments
+===============
+
+Thanks to Matt Cirigliano, Martin Pusic, and Oleksandr Savenkov of NYU
+School of Medicine for providing data and consultation. And thank you to
+Yoav Bergner for his advice and guidance.
