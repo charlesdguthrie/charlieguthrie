@@ -34,10 +34,10 @@ img {
 ```{r echo=FALSE}
 library(knitr)
 library(reshape) #for processing
-require(party)
-require(ROCR)
-require(ggplot2)
-require(glmnet) #regularization
+library(party)
+library(ROCR)
+library(ggplot2)
+library(glmnet) #regularization
 
 #setwd('~/git/edsp')
 source('scripts/explore_data.R')
