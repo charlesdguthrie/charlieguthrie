@@ -5,7 +5,6 @@ require(ROCR)
 require(ggplot2)
 
 #regularization
-require(LiblineaR)
 require(glmnet)
 
 #Make training predictions
@@ -20,14 +19,6 @@ confusion_matrix = function(model,df,label=df$label,threshold=.57){
 get_accuracy <- function(crosstab) {
   return(sum(diag(crosstab))/sum(sum((crosstab))))
 }
-
-#display_results <- function(model,df,label,threshold=0.57){
-#  print(summary(model))
-#  tab = confusion_matrix(model,df,label=label,threshold=threshold)
-#  print(tab)
-#  accuracy = get_accuracy(tab)
-#  print(c("accuracy:",accuracy))
-#}
 
 optimize_threshold = function(){
   #

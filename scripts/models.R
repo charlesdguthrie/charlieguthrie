@@ -1,11 +1,5 @@
 #models.R
 #Models and testing on restructured dataset.
-require(party)
-require(ROCR)
-require(ggplot2)
-
-#regularization
-require(glmnet)
 
 
 #Linear regression

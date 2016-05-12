@@ -33,6 +33,12 @@ img {
 
 ```{r echo=FALSE}
 library(knitr)
+library(reshape) #for processing
+require(party)
+require(ROCR)
+require(ggplot2)
+require(glmnet) #regularization
+
 #setwd('~/git/edsp')
 source('scripts/explore_data.R')
 source('scripts/processing.R')

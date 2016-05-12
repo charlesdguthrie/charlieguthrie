@@ -1,3 +1,41 @@
+### Document Setup: Run Code
+
+This loads the data and dependencies, and builds models for
+demonstration. Procedure explained later in the document.
+
+    library(knitr)
+    library(reshape) #for processing
+    require(party)
+    require(ROCR)
+    require(ggplot2)
+    require(glmnet) #regularization
+
+
+    #setwd('~/git/edsp')
+    source('scripts/explore_data.R')
+    source('scripts/processing.R')
+    source('scripts/model_functions.R')
+
+    df = load_data('data/fullData.csv','data/dataDefs.csv')
+
+    #investigation 1a
+    lin_data = process_for_linear(df)
+    lin_train = lin_data[[1]]
+    lin_test = lin_data[[2]]
+
+    #investigation 1b
+    data = process_data(df)
+    train=data[[1]]
+    test=data[[2]]
+
+    #investigation 2
+    data_w = widen(df)
+    train_w = data_w[[1]]
+    test_w = data_w[[2]]
+
+    #build models
+    source('scripts/models.R')
+
 Project Overview
 ================
 
@@ -39,38 +77,6 @@ Variables that may have an impact on student performance:
 -   Magnifying images
 -   Checking answers using “expert” links
 -   Time spent on cards
-
-Run Code
---------
-
-This loads the data and builds models for demonstration. Procedure
-explained later in the document.
-
-    library(knitr)
-    #setwd('~/git/edsp')
-    source('scripts/explore_data.R')
-    source('scripts/processing.R')
-    source('scripts/model_functions.R')
-
-    df = load_data('data/fullData.csv','data/dataDefs.csv')
-
-    #investigation 1a
-    lin_data = process_for_linear(df)
-    lin_train = lin_data[[1]]
-    lin_test = lin_data[[2]]
-
-    #investigation 1b
-    data = process_data(df)
-    train=data[[1]]
-    test=data[[2]]
-
-    #investigation 2
-    data_w = widen(df)
-    train_w = data_w[[1]]
-    test_w = data_w[[2]]
-
-    #build models
-    source('scripts/models.R')
 
 Data Exploration
 ================

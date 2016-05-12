@@ -1,10 +1,10 @@
 ---
-title: "Engagement vs. Performance on the MedU Platform"
+title: "Evaluating Online Course Materials"
 author: "Charlie Guthrie"
 date: "May 10, 2016"
 output: md_document
-variant: markdown_github
 highlight: tango
+variant: markdown_github
 subtitle: APSTA-GE 2017 Educational Data Science Practicum
 ---
 
@@ -12,39 +12,17 @@ subtitle: APSTA-GE 2017 Educational Data Science Practicum
 knitr::opts_chunk$set(cache=TRUE, warning=FALSE)
 ```
 
-
-#Project Overview
-Thanks to data recorded in online courses, we can now evaluate what content does and does not impact student learning. By building a model that uses learning activity engagement to predict student assessment performance, we can take an analytical approach to instructional design. This project demonstrates this technique on the MedU CORE Radiology course.  
-
-![MedU CORE Radiology Course](resources/logo.png)
-
-#About the Data
-Student performance is measured by score on multiple-choice questions throughout the 23-card unit. Learning activities on cards include:
-
-- reading material
-- links
-- images
-- assessments throughout
-
-##Screenshot of sample learning card
-![Screenshot of sample learning card](figures/card_screenshot.png)
-
-Different cards had different content and types of material on them. The figure below displays maps variables available on each card.
-![Card Map](figures/card_map.png)
-
-
-##Key Variables
-Variables that may have an impact on student performance:
-
-  - Clicking hyperlinks
-  - Magnifying images
-  - Checking answers using “expert” links
-  - Time spent on cards
-
-##Run Code
-This loads the data and builds models for demonstration. Procedure explained later in the document.
+###Document Setup: Run Code
+This loads the data and dependencies, and builds models for demonstration. Procedure explained later in the document.
 ```{r echo=TRUE, results='hide', message=FALSE, warning=FALSE}
 library(knitr)
+library(reshape) #for processing
+require(party)
+require(ROCR)
+require(ggplot2)
+require(glmnet) #regularization
+
+
 #setwd('~/git/edsp')
 source('scripts/explore_data.R')
 source('scripts/processing.R')
@@ -70,6 +48,36 @@ test_w = data_w[[2]]
 #build models
 source('scripts/models.R')
 ```
+
+#Project Overview
+Thanks to data recorded in online courses, we can now evaluate what content does and does not impact student learning. By building a model that uses learning activity engagement to predict student assessment performance, we can take an analytical approach to instructional design. This project demonstrates this technique on the MedU CORE Radiology course.  
+
+![MedU CORE Radiology Course](resources/logo.png)
+
+
+#About the Data
+Student performance is measured by score on multiple-choice questions throughout the 23-card unit. Learning activities on cards include:
+
+- reading material
+- links
+- images
+- assessments throughout
+
+##Screenshot of sample learning card
+![Screenshot of sample learning card](figures/card_screenshot.png)
+
+Different cards had different content and types of material on them. The figure below displays maps variables available on each card.
+![Card Map](figures/card_map.png)
+
+
+##Key Variables
+Variables that may have an impact on student performance:
+
+  - Clicking hyperlinks
+  - Magnifying images
+  - Checking answers using “expert” links
+  - Time spent on cards
+  
 
 #Data Exploration
 
