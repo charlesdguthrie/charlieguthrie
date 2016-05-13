@@ -389,6 +389,7 @@ one another, and against magnificiation clicks, etc. The goal here is to
 help instructional designers
 
 Here is what the model looks like for the unit assessment on card 5:
+
 ![Card map 5](figures/card_map_5.png) ![Model for card
 5](figures/model%202%20full.png)
 
